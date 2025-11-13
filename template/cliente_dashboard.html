@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel Cliente</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/cliente_dashboard.css') }}">
+
+  <style>
+    .image-container {
+      position: relative;
+      max-width: 800px;
+      margin: 30px auto;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+    }
+    .image-container img {
+      width: 100%;
+    }
+    .shine {
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 50%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: shine 3s infinite;
+    }
+    @keyframes shine { to { left: 100%; } }
+
+    /* Dropdown perfil */
+    .profile-dropdown { position: relative; display: inline-block; }
+    .profile-img {
+      width: 40px; height: 40px; border-radius: 50%;
+      border: 2px solid var(--color-gold);
+      cursor: pointer;
+    }
+    .dropdown-menu {
+      display: none; position: absolute; right: 0;
+      background: var(--bg-card); min-width: 200px;
+      box-shadow: var(--shadow); border-radius: 8px;
+      z-index: 1000;
+    }
+    .dropdown-menu.show { display: block; }
+    .dropdown-menu a {
+      padding: 12px 15px; display: block;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+    .dropdown-menu a:hover { background: var(--bg-secondary); }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 20000;
+      justify-content: center; align-items: center;
+    }
+    .modal-content {
+      background: var(--bg-card);
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%; max-width: 450px;
+    }
+    .close { float: right; cursor: pointer; font-size: 22px; }
+
+    .tab-buttons {
+      display: flex; gap: 10px;
+      margin-bottom: 15px;
+    }
+    .tab-buttons button {
+      flex: 1;
+      background: var(--color-gold);
+      border: none; padding: 8px;
+      border-radius: 6px;
+      font-weight: bold; cursor: pointer;
+    }
+    .tab-section { display: none; }
+
+    .password-wrapper { position: relative; }
+    .password-wrapper input { width: 100%; padding-right: 40px; }
+    .toggle-pass {
+      position: absolute; right: 10px; top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="container mt-3">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+  <!-- NAVBAR -->
+  <div class="header-container">
+    <nav class="navbar">
+
+      <div class="header">
+        <img src="{{ url_for('static', filename='img/logooo.png') }}" class="logo">
+        <h1 class="nombre-logo">Parrilla 51</h1>
+      </div>
+
+      <div class="navbar-links">
+        <a href="{{ url_for('dashboard.cliente_reservar') }}">Reservar</a>
+        <a href="{{ url_for('cliente.cliente_productos') }}">Ver Menú</a>
+        <a href="{{ url_for('cliente.cliente_carrito') }}">Ir al carrito</a>
+        <a href="{{ url_for('cliente.cliente_ver_reservas') }}">Mis reservas</a>
+        <a href="{{ url_for('cliente.cliente_mis_pedidos') }}">Mis Pedidos</a>
+      </div>
+
+      <div class="profile-dropdown">
+        <img src="{{ url_for('static', filename='img/perfil.png') }}" class="profile-img" id="profileBtn">
+        <div class="dropdown-menu" id="profileMenu">
+          <p class="user-name">{{ session["nombre_usuario"] }}</p>
+          <a href="#" id="openProfile">Mi Perfil</a>
+          <a href="{{ url_for('auth.logout') }}">Cerrar sesión</a>
+        </div>
+      </div>
+
+    </nav>
+  </div>
+
+  <div class="content">
+    <h1>Bienvenido(a), {{ session["nombre"] }} 🥩</h1>
+    <p>Carne 100% colombiana</p>
+
+    <div class="image-container">
+      <img src="{{ url_for('static', filename='img/churrasco.jpg') }}">
+      <div class="shine"></div>
+    </div>
+  </div>
+
+  <!-- ✅ MODAL PERFIL -->
+  <div id="perfilModal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="closeModal">&times;</span>
+      <h2>Mi Perfil</h2>
+
+      <div class="tab-buttons">
+        <button onclick="showSection('perfil-section')">Editar Info</button>
+        <button onclick="showSection('pass-section')">Cambiar Contraseña</button>
+      </div>
+
+      <!-- Editar info -->
+      <div id="perfil-section" class="tab-section">
+        <form id="perfilForm">
+          <input type="text" id="nombre" placeholder="Nombre">
+          <input type="text" id="apellido" placeholder="Apellido">
+          <input type="text" id="telefono" placeholder="Teléfono">
+          <input type="text" id="direccion" placeholder="Dirección">
+          <input type="email" id="correo" placeholder="Correo">
+          <button type="submit">Guardar Cambios</button>
+        </form>
+      </div>
+
+      <!-- Cambiar contraseña -->
+      <div id="pass-section" class="tab-section">
+        <form id="passForm">
+          <div class="password-wrapper">
+            <input type="password" id="oldPass" placeholder="Contraseña Actual">
+            <span class="toggle-pass" onclick="togglePassword('oldPass', this)">👁️</span>
+          </div>
+
+          <div class="password-wrapper">
+            <input type="password" id="newPass" placeholder="Nueva Contraseña">
+            <span class="toggle-pass" onclick="togglePassword('newPass', this)">👁️</span>
+          </div>
+
+          <div class="password-wrapper">
+            <input type="password" id="confirmPass" placeholder="Confirmar Nueva Contraseña">
+            <span class="toggle-pass" onclick="togglePassword('confirmPass', this)">👁️</span>
+          </div>
+
+          <button type="submit">Cambiar Contraseña</button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>
+    Parrilla 51 © 2025
+  </footer>
+
+  <script>
+  document.addEventListener("DOMContentLoaded", function () {
+
+    /* Dropdown */
+    const profileBtn = document.getElementById("profileBtn");
+    const profileMenu = document.getElementById("profileMenu");
+    profileBtn.onclick = () => profileMenu.classList.toggle("show");
+
+    /* Modal */
+    const openBtn = document.getElementById("openProfile");
+    const modal = document.getElementById("perfilModal");
+    const closeBtn = document.getElementById("closeModal");
+
+    openBtn.onclick = function(e) {
+      e.preventDefault();
+
+      fetch('/cliente/api/perfil')
+        .then(res => res.json())
+        .then(data => {
+          nombre.value = data.nombre;
+          apellido.value = data.apellido;
+          telefono.value = data.telefono;
+          direccion.value = data.direccion;
+          correo.value = data.correo;
+
+          modal.style.display = "flex";
+          showSection('perfil-section');
+        });
+    };
+
+    closeBtn.onclick = () => modal.style.display = "none";
+    window.onclick = (e) => { if(e.target === modal) modal.style.display = "none"; };
+
+    /* Guardar perfil */
+    document.getElementById('perfilForm').onsubmit = function(e){
+      e.preventDefault();
+
+      fetch('/cliente/api/perfil', {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          nombre: nombre.value,
+          apellido: apellido.value,
+          telefono: telefono.value,
+          direccion: direccion.value,
+          correo: correo.value
+        })
+      })
+      .then(r => r.json())
+      .then(resp => {
+        alert(resp.mensaje);
+        modal.style.display = "none";
+      });
+    };
+
+    /* Cambiar contraseña */
+    document.getElementById('passForm').onsubmit = function(e){
+      e.preventDefault();
+
+      if(newPass.value !== confirmPass.value){
+        alert("Las contraseñas no coinciden");
+        return;
+      }
+
+      fetch('/cliente/api/cambiar_contrasena', {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          oldPass: oldPass.value,
+          newPass: newPass.value
+        })
+      })
+      .then(r => r.json())
+      .then(resp => {
+        alert(resp.mensaje);
+        if(resp.mensaje.includes("correctamente")){
+          modal.style.display = "none";
+        }
+      });
+    };
+
+  });
+
+  function showSection(id){
+    document.querySelectorAll('.tab-section').forEach(x => x.style.display="none");
+    document.getElementById(id).style.display="block";
+  }
+
+  function togglePassword(id, el){
+    const input = document.getElementById(id);
+    input.type = input.type === "password" ? "text" : "password";
+    el.textContent = input.type === "password" ? "👁️" : "🙈";
+  }
+  </script>
+
+</body>
+</html>

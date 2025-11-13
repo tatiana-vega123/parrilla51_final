@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Pedidos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+</head>
+<body>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="container mt-3">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+    <div class="container">
+        <h1 class="text-center" style="color: var(--color-gold);">Mis Pedidos</h1>
+
+        {% if pedidos %}
+        <div class="acciones">
+            {% for pedido in pedidos %}
+            <div class="card">
+                <h3>Pedido #{{ pedido.id_pedido }}</h3>
+                <p><strong>Usuario:</strong> {{ pedido.nombre_usuario }}</p>
+                <p><strong>Fecha:</strong> {{ pedido.fecha }}</p>
+                <p><strong>Hora:</strong> {{ pedido.hora }}</p>
+                <p><strong>Total:</strong> ${{ pedido.total }}</p>
+                <p><strong>Estado:</strong> 
+                    <span class="estado {% if pedido.estado == 'pendiente' %}pendiente{% elif pedido.estado == 'entregado' %}entregado{% elif pedido.estado == 'cancelado' %}cancelado{% endif %}">
+                        {{ pedido.estado }}
+                    </span>
+                </p>
+                <p><strong>Entrega:</strong> {{ pedido.tipo_entrega }}</p>
+                <p><strong>Pago:</strong> {{ pedido.metodo_pago }}</p>
+                <hr>
+
+                <p><strong>Productos:</strong></p>
+                <ul style="text-align: left; padding-left: 20px;">
+                    {% for producto in pedido.productos %}
+                        <li>{{ producto.nombre_producto }} (x{{ producto.cantidad }}) – ${{ producto.precio_unitario }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center mt-3">
+            <p style="color: var(--color-gold); font-weight: bold;">No tienes pedidos registrados.</p>
+        </div>
+        {% endif %}
+
+        <div class="volver-wrap">
+            <a href="{{ url_for('dashboard.cliente_dashboard') }}" class="volver">← Volver</a>
+        </div>
+    </div>
+
+    <footer>
+        © 2025 Parrilla 51 - Todos los derechos reservados
+    </footer>
+</body>
+</html>

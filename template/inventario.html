@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Inventario Completo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+    <style>
+        .alertas-section {
+            background: #fff3cd;
+            border: 3px solid #ffc107;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 1400px;
+        }
+        
+        .alertas-section h2 {
+            color: #856404;
+            margin: 0 0 15px 0;
+        }
+        
+        .alerta-item {
+            background: white;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 5px;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin: 20px auto;
+            max-width: 1400px;
+            padding: 0 20px;
+        }
+        
+        .tab-button {
+            padding: 12px 25px;
+            border: none;
+            background: #6c757d;
+            color: white;
+            cursor: pointer;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .tab-button.active {
+            background: var(--color-gold);
+            color: #000;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .productos-grid, .insumos-grid, .mesas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .item-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            border: 2px solid #ddd;
+            transition: all 0.3s;
+        }
+        
+        .item-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .item-card.stock-bajo {
+            border-color: #ffc107;
+            background: #fff3cd;
+        }
+        
+        .item-card.sin-stock {
+            border-color: #dc3545;
+            background: #f8d7da;
+        }
+        
+        .item-card.inactivo {
+            opacity: 0.6;
+            border-color: #6c757d;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        
+        .badge-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .badge-warning {
+            background: #ffc107;
+            color: #000;
+        }
+        
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .badge-secondary {
+            background: #6c757d;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="container mt-3">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="header-container">
+        <nav class="navbar">
+            <div class="header">
+                <img src="{{ url_for('static', filename='image.png') }}" alt="Logo" class="logo">
+                <h1 class="nombre-logo">Inventario - Parrilla 51</h1>
+            </div>
+            <a href="{{ url_for('auth.logout') }}" class="btn">Salir</a>
+        </nav>
+    </div>
+
+    <main>
+        <h1 style="text-align: center; margin: 30px 0;">📦 Inventario Completo</h1>
+
+        <!-- ✅ ALERTAS -->
+        {% if alertas and alertas|length > 0 %}
+        <div class="alertas-section">
+            <h2>⚠️ Alertas de Stock</h2>
+            {% for alerta in alertas %}
+            <div class="alerta-item">
+                <strong>{{ alerta.mensaje }}</strong>
+                <span style="float: right; color: #999; font-size: 0.9rem;">
+                    {{ alerta.fecha.strftime('%d/%m/%Y %H:%M') }}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- TABS -->
+        <div class="tabs">
+            <button class="tab-button active" onclick="showTab('productos')">📦 Productos</button>
+            <button class="tab-button" onclick="showTab('insumos')">🥘 Insumos</button>
+            <button class="tab-button" onclick="showTab('mesas')">🪑 Mesas</button>
+        </div>
+
+        <!-- TAB PRODUCTOS -->
+        <div id="productos" class="tab-content active">
+            <div style="text-align: center; margin: 20px 0;">
+                <a href="{{ url_for('admin.agregar_producto') }}" class="btn">➕ Agregar Producto</a>
+            </div>
+            
+            <div class="productos-grid">
+                {% for p in productos %}
+                <div class="item-card 
+                    {% if p.estado == 'No disponible' %}inactivo
+                    {% elif p.cantidad == 0 %}sin-stock
+                    {% elif p.cantidad < 5 %}stock-bajo{% endif %}">
+                    
+                    {% if p.imagen %}
+                    <img src="{{ p.imagen }}" alt="{{ p.nombre }}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px;">
+                    {% endif %}
+                    
+                    <h3>{{ p.nombre }}</h3>
+                    
+                    {% if p.estado == 'No disponible' %}
+                        <span class="badge badge-secondary">🔴 NO DISPONIBLE</span>
+                    {% elif p.cantidad == 0 %}
+                        <span class="badge badge-danger">❌ SIN STOCK</span>
+                    {% elif p.cantidad < 5 %}
+                        <span class="badge badge-warning">⚠️ STOCK BAJO</span>
+                    {% else %}
+                        <span class="badge badge-success">✅ STOCK OK</span>
+                    {% endif %}
+                    
+                    <p><strong>Cantidad:</strong> {{ p.cantidad }}</p>
+                    <p><strong>Precio:</strong> ${{ "{:,.0f}".format(p.precio) }}</p>
+                    <p><strong>Categoría:</strong> {{ p.nombre_categoria or 'N/A' }}</p>
+                    
+                    <div style="margin-top: 15px;">
+                        <a href="{{ url_for('admin.editar_producto', id_producto=p.id_producto) }}" 
+                           class="btn btn-editar">✏️ Editar</a>
+                        
+                        {% if p.estado == 'Disponible' %}
+                        <a href="{{ url_for('admin.toggle_producto', id_producto=p.id_producto) }}" 
+                           class="btn" style="background: #ffc107;">🔴 Desactivar</a>
+                        {% else %}
+                        <a href="{{ url_for('admin.toggle_producto', id_producto=p.id_producto) }}" 
+                           class="btn" style="background: #28a745;">✅ Activar</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- TAB INSUMOS -->
+        <div id="insumos" class="tab-content">
+            <div style="text-align: center; margin: 20px 0;">
+                <a href="{{ url_for('admin.agregar_insumo') }}" class="btn">➕ Agregar Insumo</a>
+            </div>
+            
+            <div class="insumos-grid">
+                {% for i in insumos %}
+                <div class="item-card {% if i.cantidad < 5 %}stock-bajo{% endif %}">
+                    <h3>{{ i.nombre }}</h3>
+                    
+                    {% if i.cantidad < 5 %}
+                        <span class="badge badge-warning">⚠️ STOCK BAJO</span>
+                    {% else %}
+                        <span class="badge badge-success">✅ OK</span>
+                    {% endif %}
+                    
+                    <p><strong>Cantidad:</strong> {{ i.cantidad }}</p>
+                    <p><strong>Precio:</strong> ${{ "{:,.0f}".format(i.precio) }}</p>
+                    <p><strong>Subcategoría:</strong> {{ i.nombre_subcategoria or 'N/A' }}</p>
+                    
+                    {% if i.fecha_vencimiento %}
+                    <p><strong>Vencimiento:</strong> {{ i.fecha_vencimiento }}</p>
+                    {% endif %}
+                    
+                    <div style="margin-top: 15px;">
+                        <a href="{{ url_for('admin.editar_insumo', id_insumo=i.id_insumo) }}" 
+                           class="btn btn-editar">✏️ Editar</a>
+                        <a href="{{ url_for('admin.eliminar_insumo', id_insumo=i.id_insumo) }}" 
+                           class="btn btn-eliminar" 
+                           onclick="return confirm('¿Eliminar insumo?')">🗑️ Eliminar</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- TAB MESAS -->
+        <div id="mesas" class="tab-content">
+            <div style="text-align: center; margin: 20px 0;">
+                <a href="{{ url_for('admin.agregar_mesa') }}" class="btn">➕ Agregar Mesa</a>
+            </div>
+            
+            <div class="mesas-grid">
+                {% for m in mesas %}
+                <div class="item-card">
+                    <h3>Mesa #{{ m.numero_mesa }}</h3>
+                    
+                    {% if m.estado == 'Disponible' %}
+                        <span class="badge badge-success">✅ DISPONIBLE</span>
+                    {% elif m.estado == 'Ocupada' %}
+                        <span class="badge badge-danger">🔴 OCUPADA</span>
+                    {% else %}
+                        <span class="badge badge-warning">📅 RESERVADA</span>
+                    {% endif %}
+                    
+                    <p><strong>Capacidad:</strong> {{ m.capacidad }} personas</p>
+                    
+                    <div style="margin-top: 15px;">
+                        <a href="{{ url_for('admin.cambiar_estado_mesa', id_mesa=m.id_mesa) }}" 
+                           class="btn">🔄 Cambiar Estado</a>
+                        <a href="{{ url_for('admin.eliminar_mesa', id_mesa=m.id_mesa) }}" 
+                           class="btn btn-eliminar" 
+                           onclick="return confirm('¿Eliminar mesa?')">🗑️ Eliminar</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div style="text-align: center; margin: 40px 0;">
+            <a href="{{ url_for('admin.admin_dashboard') }}" class="volver">⬅️ Volver al Dashboard</a>
+        </div>
+    </main>
+
+    <script>
+        function showTab(tabName) {
+            // Ocultar todos los tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Desactivar todos los botones
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Mostrar tab seleccionado
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
+
+    <footer style="text-align: center; padding: 20px;">
+        © 2025 - Sistema de Inventario
+    </footer>
+</body>
+</html>

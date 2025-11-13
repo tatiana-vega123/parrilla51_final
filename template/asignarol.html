@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Asignar Rol y Estado</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+    <style>
+        .disabled {
+            color:#ccc;
+            font-style:italic;
+        }
+    </style>
+</head>
+<body>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="container mt-3">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="brand">
+    <img src="{{ url_for('static', filename='image.png') }}" alt="">
+    Parrilla 51
+  </div>
+  
+  <a href="{{ url_for('auth.logout') }}" class="btn">Salir</a>
+</nav>
+
+<!-- CONTENIDO -->
+<div class="contenido">
+    <h2>Gestión de Usuarios</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th><th>Usuario</th><th>Correo</th>
+                <th>Rol</th><th>Estado</th><th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in usuarios %}
+            <tr>
+                <td>{{ u.id_usuario }}</td>
+                <td>{{ u.nombre }} {{ u.apellido }}</td>
+                <td>{{ u.correo }}</td>
+                <td>{{ u.rol }}</td>
+                <td>{{ u.estado }}</td>
+                <td>
+                    {% if u.rol == "admin" %}
+                        <span class="disabled">Administrador fijo</span>
+                    {% else %}
+                        {% if u.estado == "activo" %}
+                            <a href="{{ url_for('admin.admin_cambiar_estado_usuario', id_usuario=u.id_usuario, nuevo_estado='inactivo') }}" class="btn btn-delete">Desactivar</a>
+                        {% else %}
+                            <a href="{{ url_for('admin.admin_cambiar_estado_usuario', id_usuario=u.id_usuario, nuevo_estado='activo') }}" class="btn">Activar</a>
+                        {% endif %}
+
+                        <a href="{{ url_for('admin.admin_cambiar_rol_usuario', id_usuario=u.id_usuario, nuevo_rol='empleado') }}" class="btn btn-edit">Empleado</a>
+                        <a href="{{ url_for('admin.admin_cambiar_rol_usuario', id_usuario=u.id_usuario, nuevo_rol='cliente') }}" class="btn btn-edit">Cliente</a>
+                        <button class="btn" onclick="abrirModal({{ u.id_usuario }})">Administrador</button>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="text-center">
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="volver">⬅️ Volver al Dashboard</a>
+    </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="modalConfirmacion">
+    <div class="modal-content">
+        <h3>Confirmación</h3>
+        <p>¿Deseas convertir este usuario en <b>Administrador</b>?</p>
+        <button id="confirmarBtn" class="btn">Sí, convertir</button>
+        <button onclick="cerrarModal()" class="btn btn-danger">Cancelar</button>
+    </div>
+</div>
+
+<footer>
+    © 2025 Parrilla 51 - Todos los derechos reservados
+</footer>
+
+<script>
+    let usuarioIdSeleccionado = null;
+
+    function abrirModal(idUsuario) {
+        usuarioIdSeleccionado = idUsuario;
+        document.getElementById("modalConfirmacion").style.display = "flex";
+    }
+    function cerrarModal() {
+        document.getElementById("modalConfirmacion").style.display = "none";
+        usuarioIdSeleccionado = null;
+    }
+    document.getElementById("confirmarBtn").addEventListener("click", function() {
+        if (usuarioIdSeleccionado) {
+            window.location.href = `/admin/usuarios/rol/${usuarioIdSeleccionado}/admin`;
+        }
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ 'Editar Insumo' if insumo else 'Agregar Insumo' }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+</head>
+<body>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="container mt-3">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="brand">
+    <img src="{{ url_for('static', filename='image.png') }}" alt="Logo Parrilla 51">
+    Parrilla 51
+  </div>
+  <div class="links">
+
+  </div>
+  <a href="{{ url_for('auth.logout') }}" class="btn">Salir</a>
+</nav>
+
+<!-- FORMULARIO -->
+<div class="container">
+  <h1>{{ 'Editar Insumo' if insumo else 'Agregar Insumo' }}</h1>
+  <form method="POST" action="{% if insumo %}{{ url_for('admin.editar_insumo', id_insumo=insumo['id_insumo']) }}{% else %}{{ url_for('admin.agregar_insumo') }}{% endif %}">
+    <label for="nombre">Nombre</label>
+    <input id="nombre" type="text" name="nombre" value="{{ insumo['nombre'] if insumo else '' }}" required>
+
+    <label for="cantidad">Cantidad</label>
+    <input id="cantidad" type="number" name="cantidad" value="{{ insumo['cantidad'] if insumo else '' }}" min="0" required>
+
+    <label for="precio">Precio</label>
+    <input id="precio" type="number" name="precio" value="{{ insumo['precio'] if insumo else '' }}" min="0" step="0.01" required>
+
+    <label for="fecha_vencimiento">Fecha de Vencimiento</label>
+    <input id="fecha_vencimiento" type="date" name="fecha_vencimiento"
+           value="{% if insumo and insumo['fecha_vencimiento'] %}{{ insumo['fecha_vencimiento'][:10] }}{% endif %}">
+
+    <label for="lote">Lote</label>
+    <input id="lote" type="date" name="lote"
+           value="{% if insumo and insumo['lote'] %}{{ insumo['lote'][:10] }}{% endif %}">
+
+    <label for="subcategoria_id">Subcategoría</label>
+    <select id="subcategoria_id" name="subcategoria_id" required>
+      {% for sub in subcategorias %}
+        <option value="{{ sub['id_subcategoria'] }}" {% if insumo and insumo['subcategoria_id'] == sub['id_subcategoria'] %}selected{% endif %}>{{ sub['nombre_subcategoria'] }}</option>
+      {% endfor %}
+    </select>
+
+    <button type="submit">Guardar</button>
+  </form>
+
+  <div class="text-center">
+    <a href="{{ url_for('admin.admin_inventario') }}" class="volver">⬅ Volver</a>
+  </div>
+</div>
+
+<footer>
+  © 2025 Parrilla 51 - Todos los derechos reservados
+</footer>
+
+</body>
+</html>

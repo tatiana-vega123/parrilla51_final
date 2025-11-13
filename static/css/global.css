@@ -1,0 +1,602 @@
+/* ==================== VARIABLES GLOBALES ==================== */
+:root {
+  --bg-primary: #2e2e2e;
+  --bg-secondary: #3a3a3a;
+  --bg-card: #2f2f2f;
+  --text-primary: #fff;
+  --text-secondary: #f0f0f0;
+  --color-accent: #ff4444;
+  --color-accent-hover: #cc0000;
+  --color-gold: #ffd700;
+  --color-gold-hover: #ffcc00;
+  --border-color: #444;
+  --shadow: 0 3px 8px rgba(0,0,0,0.4);
+}
+
+/* ==================== RESET Y BASE ==================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==================== NAVBAR ==================== */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-card);
+  padding: 12px 30px;
+  box-shadow: var(--shadow);
+}
+
+.navbar .brand,
+.navbar .logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: bold;
+  color: var(--color-accent);
+}
+
+.navbar .brand img,
+.navbar .logo img {
+  width: 40px;
+  height: auto;
+  border-radius: 8px;
+}
+
+.navbar .links,
+.navbar .menu,
+.navbar .nav-links,
+.navbar-links {
+  display: flex;
+  gap: 20px;
+  list-style: none;
+}
+
+.navbar .links a,
+.navbar .menu a,
+.navbar .nav-links a,
+.navbar .nav-links li a,
+.navbar-links a {
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: bold;
+  transition: color 0.3s;
+}
+
+.navbar .links a:hover,
+.navbar .menu a:hover,
+.navbar .nav-links a:hover,
+.navbar .nav-links li a:hover,
+.navbar-links a:hover {
+  color: var(--color-gold);
+}
+
+.perfil-btn,
+.navbar .perfil-btn {
+  background: var(--color-gold);
+  color: #000;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.perfil-btn:hover,
+.navbar .perfil-btn:hover {
+  background: var(--color-gold-hover);
+}
+
+/* ==================== HEADER CONTAINER ==================== */
+.header-container {
+  background: var(--bg-card);
+  border-bottom: 2px solid var(--color-gold);
+  box-shadow: var(--shadow);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.header .logo {
+  width: 50px;
+  height: auto;
+  border-radius: 8px;
+}
+
+.header .nombre-logo {
+  font-size: 26px;
+  color: var(--color-gold);
+  margin: 0;
+}
+
+/* ==================== CONTENEDOR PRINCIPAL ==================== */
+.container,
+.contenido,
+main {
+  padding: 40px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.container h1,
+.container h2,
+.contenido h1,
+.contenido h2,
+main h1,
+main h2 {
+  text-align: center;
+  color: var(--color-gold);
+  margin-bottom: 30px;
+}
+
+/* ==================== CARDS Y ACCIONES ==================== */
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 25px;
+  margin-top: 20px;
+  margin-bottom: auto;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.card {
+  background: var(--bg-card);
+  border: 2px solid var(--color-gold);
+  border-radius: 10px;
+  padding: 25px;
+  width: 220px;
+  box-shadow: var(--shadow);
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: scale(1.05);
+  border-color: var(--color-accent);
+}
+
+.card h3 {
+  color: var(--color-gold);
+  margin-bottom: 12px;
+}
+
+.card img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.card a,
+.card button {
+  display: inline-block;
+  padding: 10px 15px;
+  background: var(--color-gold);
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin: 5px;
+}
+
+.card a:hover,
+.card button:hover {
+  background: var(--color-accent);
+  color: var(--text-primary);
+  transform: scale(1.05);
+}
+
+/* ==================== BOTONES ==================== */
+.btn,
+button[type="submit"] {
+  padding: 10px 20px;
+  background: var(--color-gold);
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn:hover,
+button[type="submit"]:hover {
+  background: var(--color-gold-hover);
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  color: var(--text-primary);
+}
+
+.btn-primary:hover {
+  background: var(--color-accent-hover);
+}
+
+.btn-success {
+  background: #28a745;
+  color: var(--text-primary);
+}
+
+.btn-success:hover {
+  background: #218838;
+}
+
+.btn-danger,
+.logout-btn {
+  background: var(--color-accent);
+  color: var(--text-primary);
+}
+
+.btn-danger:hover,
+.logout-btn:hover {
+  background: var(--color-accent-hover);
+}
+
+.btn-editar,
+.btn-edit {
+  background: #00bcd4;
+  color: var(--text-primary);
+}
+
+.btn-editar:hover,
+.btn-edit:hover {
+  background: #0097a7;
+}
+
+.btn-eliminar,
+.btn-delete {
+  background: var(--color-accent);
+  color: var(--text-primary);
+}
+
+.btn-eliminar:hover,
+.btn-delete:hover {
+  background: var(--color-accent-hover);
+}
+
+/* ==================== BOTÓN VOLVER ==================== */
+.volver,
+.link-volver,
+a.volver {
+  display: inline-block;
+  padding: 10px 20px;
+  background: var(--color-gold);
+  color: #000;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: bold;
+  margin-top: 20px;
+  transition: all 0.3s;
+}
+
+.volver:hover,
+.link-volver:hover,
+a.volver:hover {
+  background: var(--color-accent);
+  color: var(--text-primary);
+}
+
+.volver-wrap {
+  text-align: center;
+  margin-top: 20px;
+}
+
+/* ==================== TABLAS ==================== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+thead {
+  background: var(--bg-card);
+}
+
+thead th {
+  padding: 12px;
+  text-align: center;
+  border-bottom: 2px solid var(--color-gold);
+  color: var(--color-gold);
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+tbody td {
+  padding: 12px;
+  text-align: center;
+  border-bottom: 1px solid var(--border-color);
+}
+
+tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+tbody tr:hover {
+  background: rgba(255, 215, 0, 0.1);
+}
+
+/* ==================== FORMULARIOS ==================== */
+form {
+  background: var(--bg-card);
+  padding: 25px;
+  border-radius: 10px;
+  max-width: 500px;
+  margin: 20px auto;
+  box-shadow: var(--shadow);
+}
+
+label {
+  display: block;
+  margin: 12px 0 6px;
+  font-weight: bold;
+  color: var(--color-gold);
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 18px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--border-color);
+  color: var(--text-primary);
+  font-family: inherit;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--color-gold);
+  outline: none;
+  box-shadow: 0 0 4px rgba(255, 215, 0, 0.5);
+}
+
+/* ==================== ESTADOS ==================== */
+.estado {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.pendiente {
+  background: #ffa500;
+  color: #000;
+}
+
+.entregado,
+.aceptada {
+  background: #28a745;
+}
+
+.cancelado,
+.cancelada {
+  background: #dc3545;
+}
+
+/* ==================== MODAL ==================== */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: var(--bg-card);
+  padding: 25px;
+  border-radius: 10px;
+  width: 400px;
+  max-width: 90%;
+  color: var(--text-primary);
+  position: relative;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.close {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 28px;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.close:hover {
+  color: var(--color-accent);
+}
+
+/* ==================== FOOTER ==================== */
+footer {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  text-align: center;
+  padding: 15px;
+  border-top: 2px solid var(--color-gold);
+  margin-top: auto;
+}
+
+/* ==================== ALERTAS ==================== */
+.alert {
+  padding: 12px 20px;
+  margin: 10px 0;
+  border-radius: 6px;
+  font-weight: bold;
+}
+
+.alert-success {
+  background: #28a745;
+  color: var(--text-primary);
+}
+
+.alert-danger,
+.alert-error {
+  background: #dc3545;
+  color: var(--text-primary);
+}
+
+.alert-warning {
+  background: #ffa500;
+  color: #000;
+}
+
+.alert-info {
+  background: #17a2b8;
+  color: var(--text-primary);
+}
+
+/* ==================== UTILIDADES ==================== */
+.text-center {
+  text-align: center;
+}
+
+.mt-3 {
+  margin-top: 15px;
+}
+
+.mb-3 {
+  margin-bottom: 15px;
+}
+
+.w-100 {
+  width: 100%;
+}
+
+.d-flex {
+  display: flex;
+}
+
+.justify-content-center {
+  justify-content: center;
+}
+
+.align-items-center {
+  align-items: center;
+}
+
+.gap-20 {
+  gap: 20px;
+}
+
+/* ====== POSICIÓN IDEAL DE LAS TARJETAS EN EL DASHBOARD ====== */
+body:has(.acciones) .container {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; 
+  align-items: center;
+  margin-top: 40px;       /* sube el título */
+  margin-bottom: 0;
+  min-height: auto;       /* evita empujar las cards hacia abajo */
+}
+
+/* subir las tarjetas del panel */
+body:has(.acciones) .acciones {
+  margin-top: 20px !important;   /* sube aún más las cards */
+  margin-bottom: 60px !important; /* separación del footer */
+}
+
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .navbar .links,
+  .navbar .menu {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .acciones {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    width: 100%;
+  }
+
+  form {
+    padding: 15px;
+  }
+}
+
+/* ====== FORZAR DISEÑO OSCURO PARA LOGIN/REGISTRO ====== */
+body {
+  background: var(--bg-primary) !important;
+}
+
+.card {
+  background: var(--bg-card) !important;
+  border: 2px solid var(--color-gold) !important;
+  color: var(--text-primary) !important;
+}
+
+.card-body {
+  background: var(--bg-card) !important;
+}
+
+.form-control {
+  background: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.form-control:focus {
+  background: var(--bg-secondary) !important;
+  border-color: var(--color-gold) !important;
+}
+
+.btn-primary {
+  background: var(--color-accent) !important;
+  border: none !important;
+}
+
+.btn-primary:hover {
+  background: var(--color-accent-hover) !important;
+}

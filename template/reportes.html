@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Reportes - Parrilla 51</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+</head>
+<body>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="container mt-3">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+  <!-- Navbar -->
+  <div class="header-container">
+    <nav class="navbar">
+      <div class="header">
+        <img src="{{ url_for('static', filename='img/logooo.png') }}" alt="Logo Parrilla 51" class="logo">
+        <h1 class="nombre-logo">Parrilla 51</h1>
+      </div>
+
+      <div class="navbar-links">
+       
+      </div>
+    </nav>
+  </div>
+
+  <main class="container">
+    <!-- Pedidos Restaurante -->
+    <h2>🍽️ Pedidos en Restaurante</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>ID Pedido</th>
+          <th>Cliente</th>
+          <th>Fecha</th>
+          <th>Hora</th>
+          <th>Total</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if pedidos_restaurante %}
+          {% for p in pedidos_restaurante %}
+            <tr>
+              <td>{{ p.id_pedido|default('—') }}</td>
+
+              <td style="text-align:left;">
+                {% if p.nombre is defined and p.apellido is defined %}
+                  {{ p.nombre }} {{ p.apellido }}
+                {% elif p.cliente is defined %}
+                  {{ p.cliente }}
+                {% elif p.nombre_completo is defined %}
+                  {{ p.nombre_completo }}
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+
+              <td>{{ p.fecha|default('') }}</td>
+              <td>{{ p.hora|default('') }}</td>
+              <td>${{ "{:,.0f}".format(p.total|default(0)) }}</td>
+
+              <td>
+                {% set est = (p.estado|default(''))|lower %}
+                <span class="estado 
+                  {% if est in ['entregado','aceptada','aceptado','confirmado'] %}entregado
+                  {% elif est in ['cancelado','cancelada'] %}cancelado
+                  {% elif est in ['pendiente','en preparacion','en preparación'] %}pendiente
+                  {% endif %}">
+                  {{ p.estado|default('—') }}
+                </span>
+              </td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="6">No hay pedidos en restaurante</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+
+    <!-- Pedidos Domicilio -->
+    <h2>🚚 Pedidos a Domicilio</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>ID Pedido</th>
+          <th>Cliente</th>
+          <th>Fecha</th>
+          <th>Hora</th>
+          <th>Total</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if pedidos_domicilio %}
+          {% for p in pedidos_domicilio %}
+            <tr>
+              <td>{{ p.id_pedido|default('—') }}</td>
+
+              <td style="text-align:left;">
+                {% if p.nombre is defined and p.apellido is defined %}
+                  {{ p.nombre }} {{ p.apellido }}
+                {% elif p.cliente is defined %}
+                  {{ p.cliente }}
+                {% elif p.nombre_completo is defined %}
+                  {{ p.nombre_completo }}
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+
+              <td>{{ p.fecha|default('') }}</td>
+              <td>{{ p.hora|default('') }}</td>
+              <td>${{ "{:,.0f}".format(p.total|default(0)) }}</td>
+
+              <td>
+                {% set est = (p.estado|default(''))|lower %}
+                <span class="estado 
+                  {% if est in ['entregado','aceptada','aceptado','confirmado'] %}entregado
+                  {% elif est in ['cancelado','cancelada'] %}cancelado
+                  {% elif est in ['pendiente','en preparacion','en preparación'] %}pendiente
+                  {% endif %}">
+                  {{ p.estado|default('—') }}
+                </span>
+              </td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="6">No hay pedidos a domicilio</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+
+    <!-- Reservas -->
+    <h2>📅 Reservas</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>ID Reserva</th>
+          <th>Fecha</th>
+          <th>Hora</th>
+          <th>Cantidad Personas</th>
+          <th>Estado</th>
+          <th>Mesa</th>
+          <th>Capacidad</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if reservas %}
+          {% for r in reservas %}
+            <tr>
+              <td>{{ r.id_reserva|default('—') }}</td>
+              <td>{{ r.fecha|default('') }}</td>
+              <td>{{ r.hora|default('') }}</td>
+
+              <td>
+                {{ r.cant_personas|default(r.personas|default(r.cantidad|default('—'))) }}
+              </td>
+
+              <td>
+                {% set rest = (r.estado|default(''))|lower %}
+                <span class="estado 
+                  {% if rest in ['aceptada','aceptado','confirmado','disponible'] %}aceptada
+                  {% elif rest in ['cancelada','cancelado','no disponible'] %}cancelada
+                  {% endif %}">
+                  {{ r.estado|default('—') }}
+                </span>
+              </td>
+
+              <td>{{ r.id_mesa|default(r.mesa|default(r.cod_mesa|default('—'))) }}</td>
+              <td>{{ r.capacidad|default('—') }}</td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="7">No hay reservas</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+
+    <!-- Inventario bajo -->
+    <h2>⚠️ Inventario bajo (Insumos)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>ID Insumo</th>
+          <th>Nombre</th>
+          <th>Cantidad</th>
+          <th>Precio</th>
+          <th>Estado Stock</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if stock_bajo %}
+          {% for i in stock_bajo %}
+            <tr>
+              <td>{{ i.id_insumo|default(i.id_producto|default('—')) }}</td>
+              <td style="text-align:left;">{{ i.nombre|default('—') }}</td>
+              <td>{{ i.cantidad|default('0') }}</td>
+              <td>
+                {% if i.precio is defined and i.precio is not none %}
+                  ${{ "{:,.0f}".format(i.precio) }}
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+              <td>
+                <span class="estado pendiente">
+                  {{ i.estado_stock|default('—') }}
+                </span>
+              </td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="5">No hay insumos con stock bajo</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+
+    <div class="text-center mt-3">
+      <a href="{{ url_for('reportes.reportes_pdf') }}" class="btn btn-danger">📄 Exportar PDF</a>
+      <a href="{{ url_for('reportes.reportes_excel') }}" class="btn btn-success">📊 Exportar Excel</a>
+    </div>
+
+    <!-- BOTÓN VOLVER -->
+    <div class="volver-wrap">
+      <a href="{{ url_for('admin.admin_dashboard') }}" class="volver">← Volver al Dashboard</a>
+    </div>
+  </main>
+
+  <footer>
+    &copy; 2025 Parrilla 51 - Todos los derechos reservados
+  </footer>
+</body>
+</html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Consultar Productos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+    <style>
+        /* ✅ Alertas de stock */
+        .alertas-stock {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .alertas-stock h3 {
+            color: #856404;
+            margin: 0 0 10px 0;
+            font-size: 1.2rem;
+        }
+        
+        .alerta-item {
+            background: white;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+        
+        /* ✅ Estilos para productos desactivados */
+        .card.producto-inactivo {
+            opacity: 0.6;
+            border: 2px solid #dc3545;
+            background: #f8d7da;
+        }
+        
+        .card.producto-activo {
+            border: 2px solid #28a745;
+        }
+        
+        /* ✅ Badge de stock */
+        .badge-stock {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin: 5px 0;
+        }
+        
+        .stock-bajo {
+            background: #ffc107;
+            color: #000;
+        }
+        
+        .sin-stock {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .stock-ok {
+            background: #28a745;
+            color: white;
+        }
+        
+        /* ✅ Botones de acción */
+        .btn-activar {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-desactivar {
+            background: #ffc107;
+            color: #000;
+        }
+        
+        .btn-eliminar {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .estado-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .estado-disponible {
+            background: #28a745;
+            color: white;
+        }
+        
+        .estado-no-disponible {
+            background: #dc3545;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="container mt-3">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="header-container">
+        <nav class="navbar"> 
+            <div class="header">
+                <img src="{{ url_for('static', filename='image.png') }}" alt="Logo Parrilla 51" class="logo">
+                <h1 class="nombre-logo">Parrilla 51</h1>
+            </div>
+            <div class="links"></div>
+            <a href="{{ url_for('auth.logout') }}" class="btn">Salir</a>
+        </nav>
+    </div>
+
+    <main>
+        <h1>🔍 Lista de Productos</h1>
+        
+        <!-- ✅ Alertas de stock bajo -->
+        {% if alertas_stock and alertas_stock|length > 0 %}
+        <div class="alertas-stock">
+            <h3>⚠️ Alertas de Stock</h3>
+            {% for alerta in alertas_stock %}
+            <div class="alerta-item">
+                {{ alerta.mensaje }} - {{ alerta.fecha.strftime('%d/%m/%Y %H:%M') }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <div class="text-center" style="margin: 20px 0;">
+            <a href="{{ url_for('admin.agregar_producto') }}" class="btn" style="background: #28a745;">➕ Agregar Producto</a>
+        </div>
+        
+        <div class="cards-container">
+            {% for p in productos %}
+            <div class="card {% if p.estado == 'No disponible' %}producto-inactivo{% else %}producto-activo{% endif %}">
+                {% if p.imagen %}
+                    <img src="{{ p.imagen }}" alt="{{ p.nombre }}">
+                {% else %}
+                    <img src="{{ url_for('static', filename='image.png') }}" alt="Sin imagen">
+                {% endif %}
+                
+                <h2>{{ p.nombre }}</h2>
+                
+                <!-- ✅ Badge de estado -->
+                <span class="estado-badge {% if p.estado == 'Disponible' %}estado-disponible{% else %}estado-no-disponible{% endif %}">
+                    {{ p.estado }}
+                </span>
+                
+                <!-- ✅ Badge de stock -->
+                {% if p.cantidad == 0 %}
+                    <span class="badge-stock sin-stock">❌ SIN STOCK</span>
+                {% elif p.cantidad < 5 %}
+                    <span class="badge-stock stock-bajo">⚠️ STOCK BAJO</span>
+                {% else %}
+                    <span class="badge-stock stock-ok">✅ STOCK OK</span>
+                {% endif %}
+                
+                <p><strong>Cantidad:</strong> {{ p.cantidad }}</p>
+                <p><strong>Precio:</strong> COP ${{ "{:,.0f}".format(p.precio) }}</p>
+                <p><strong>Categoría:</strong> {{ p.nombre_categoria }}</p>
+                <p><strong>Descripción:</strong> {{ p.descripcion }}</p>
+
+                <a href="{{ url_for('admin.editar_producto', id_producto=p.id_producto) }}" 
+                   class="btn btn-editar">✏️ Editar</a>
+                
+                <!-- ✅ Botón activar/desactivar -->
+                {% if p.estado == 'Disponible' %}
+                    <a href="{{ url_for('admin.toggle_producto', id_producto=p.id_producto) }}" 
+                       class="btn btn-desactivar" 
+                       onclick="return confirm('¿Desactivar este producto? Los clientes no podrán verlo.');">
+                       🔴 Desactivar
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('admin.toggle_producto', id_producto=p.id_producto) }}" 
+                       class="btn btn-activar" 
+                       onclick="return confirm('¿Activar este producto?');">
+                       ✅ Activar
+                    </a>
+                {% endif %}
+                
+                <!-- ✅ Botón eliminar (opcional - solo si realmente quieres eliminar permanentemente) -->
+                <!-- 
+                <a href="{{ url_for('admin.eliminar_producto', id_producto=p.id_producto) }}" 
+                   class="btn btn-eliminar" 
+                   onclick="return confirm('⚠️ ADVERTENCIA: Esto eliminará el producto permanentemente de la base de datos. ¿Estás seguro?');">
+                   🗑️ Eliminar Permanente
+                </a>
+                -->
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="text-center">
+            <a href="{{ url_for('admin.admin_dashboard') }}" class="volver">⬅️ Volver al Dashboard</a>
+        </div>
+    </main>
+
+    <footer>
+        © 2025 - Panel de Administración
+    </footer>
+</body>
+</html>

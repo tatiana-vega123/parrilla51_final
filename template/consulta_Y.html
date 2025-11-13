@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Consultar Insumos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+</head>
+<body>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="container mt-3">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+    <div class="header-container">
+        <nav class="navbar"> 
+            <div class="header">
+                <img src="{{ url_for('static', filename='image.png') }}" alt="Logo Parrilla 51" class="logo">
+                <h1 class="nombre-logo">Parrilla 51</h1>
+            </div>
+        
+            <a href="{{ url_for('auth.logout') }}" class="btn">Salir</a>
+        </nav>
+    </div>
+
+    <main>
+        <h1>🥕 Lista de Insumos</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Cantidad</th>
+                    <th>Precio</th>
+                    <th>Fecha Vencimiento</th>
+                    <th>Lote</th>
+                    <th>Subcategoría</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in insumos %}
+                <tr>
+                    <td>{{ i.id_insumo }}</td>
+                    <td>{{ i.nombre }}</td>
+                    <td>{{ i.cantidad }}</td>
+                    <td>COP ${{ "{:,.0f}".format(i.precio).replace(",", ".") }}</td>
+                    <td>{{ i.fecha_vencimiento or "N/A" }}</td>
+                    <td>{{ i.lote or "N/A" }}</td>
+                    <td>{{ i.nombre_subcategoria or "Sin subcategoría" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="text-center">
+            <a href="{{ url_for('admin.admin_dashboard') }}" class="volver">⬅️ Volver al Dashboard</a>
+        </div>
+    </main>
+
+    <footer>
+        © 2025 - Panel de Administración
+    </footer>
+</body>
+</html>

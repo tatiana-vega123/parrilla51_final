@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventario - Parrilla 51</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+</head>
+<body>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="container mt-3">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+  <nav class="navbar">
+    <div class="logo">
+      <img src="{{ url_for('static', filename='img/logooo.png') }}" alt="Logo">
+      <span>Parrilla 51</span>
+    </div>
+    <div class="navbar-links">
+   
+    </div>
+    <a href="{{ url_for('auth.logout') }}" class="btn btn-danger">Salir</a>
+  </nav>
+
+  <div class="container">
+
+    <h2>📦 Productos</h2>
+    <a href="{{ url_for('admin.agregar_producto') }}" class="btn">+ Agregar Producto</a>
+    
+    <!-- Botones para filtrar -->
+    <div class="mt-3 mb-3">
+      <button class="btn btn-editar" onclick="filtrar('cerdo')">Cerdo</button>
+      <button class="btn btn-editar" onclick="filtrar('res')">Res</button>
+      <button class="btn btn-editar" onclick="filtrar('pollo')">Pollo</button>
+      <button class="btn btn-editar" onclick="filtrar('plato del dia')">Plato del día</button>
+      <button class="btn btn-editar" onclick="filtrar('acompañamiento')">Acompañamientos</button>
+      <button class="btn btn-editar" onclick="filtrar('entradas')">Entradas</button>
+      <button class="btn btn-editar" onclick="filtrar('platos combinados')">Platos combinados</button>
+      <button class="btn btn-editar" onclick="filtrar('cortes gruesos')">Cortes gruesos</button>
+      <button class="btn btn-editar" onclick="filtrar('bebidas')">Bebidas</button>
+      <button class="btn btn-editar" onclick="filtrar('adicionales')">Adicionales</button>
+      <button class="btn btn-primary" onclick="filtrar('')">Ver Todos</button>
+    </div>
+
+    {% if productos %}
+    <div class="acciones">
+    {% for p in productos %}
+    <div class="card producto-card" 
+        data-categoria="{{ p.get('nombre_categoria', 'sin categoría') | trim | lower }}">
+      
+      {% if p['imagen'] %}
+        {% if p['imagen'].startswith('http') %}
+          <img src="{{ p['imagen'] | trim }}" alt="{{ p['nombre'] }}">
+        {% else %}
+          <img src="{{ url_for('static', filename='uploads/' ~ p['imagen']) }}" alt="{{ p['nombre'] }}">
+        {% endif %}
+      {% else %}
+        <img src="{{ url_for('static', filename='no-image.png') }}" alt="{{ p['nombre'] }}">
+      {% endif %}
+      
+      <h3>{{ p['nombre'] }}</h3>
+      <p><strong>Cantidad:</strong> {{ p['cantidad'] }}</p>
+      <p><strong>Precio:</strong> COP ${{ "{:,.0f}".format(p['precio']).replace(",", ".") }}</p>
+      <p><strong>Categoría:</strong> {{ p.get('nombre_categoria', 'Sin categoría') }}</p>
+      <p><strong>Descripción:</strong> {{ p.get('descripcion', 'Sin descripción') }}</p>
+      <a href="{{ url_for('admin.editar_producto', id_producto=p['id_producto']) }}" class="btn btn-edit">Editar</a>
+      <a href="{{ url_for('admin.eliminar_producto', id_producto=p['id_producto']) }}" class="btn btn-delete" 
+         onclick="return confirm('¿Estás seguro de eliminar este producto?')">Eliminar</a>
+    </div>
+    {% endfor %}
+    </div>
+
+    {% else %}
+    <p>No hay productos registrados</p>
+    {% endif %}
+
+    <script>
+    function filtrar(categoria) {
+        document.querySelectorAll(".producto-card").forEach(el => {
+            if (categoria === "" || el.dataset.categoria === categoria) {
+                el.style.display = "block";  
+            } else {
+                el.style.display = "none";   
+            }
+        });
+    }
+    </script>
+
+    <!-- INSUMOS -->
+    <h2>🥕 Insumos</h2>
+    <a href="{{ url_for('admin.agregar_insumo') }}" class="btn">+ Agregar Insumo</a>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Nombre</th><th>Cantidad</th><th>Precio</th><th>Fecha Vencimiento</th>
+          <th>Lote</th><th>Subcategoría</th><th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for i in insumos %}
+      <tr>
+        <td>{{ i['nombre'] }}</td>
+        <td>{{ i['cantidad'] }}</td>
+        <td>COP ${{ "{:,.0f}".format(i['precio']).replace(",", ".") }}</td>
+        <td>{{ i['fecha_vencimiento'].strftime('%Y-%m-%d') if i['fecha_vencimiento'] else '' }}</td>
+        <td>{{ i['lote'] if i['lote'] else '' }}</td>
+        <td>{{ i.get('nombre_subcategoria', 'Sin subcategoría') }}</td>
+        <td>
+          <a href="{{ url_for('admin.editar_insumo', id_insumo=i['id_insumo']) }}" class="btn btn-edit">Editar</a>
+          <a href="{{ url_for('admin.eliminar_insumo', id_insumo=i['id_insumo']) }}" class="btn btn-delete"
+             onclick="return confirm('¿Estás seguro de eliminar este insumo?')">Eliminar</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7">No hay insumos registrados</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- MESAS -->
+    <h2>🍽️ Mesas</h2>
+    <a href="{{ url_for('admin.agregar_mesa') }}" class="btn">+ Agregar Mesa</a>
+
+    <table>
+      <thead>
+        <tr><th>Número de Mesa</th><th>Capacidad</th><th>Estado</th><th>Acciones</th></tr>
+      </thead>
+      <tbody>
+      {% for m in mesas %}
+      <tr>
+        <td>{{ m['numero_mesa'] }}</td>
+        <td>{{ m['capacidad'] }}</td>
+        <td>
+          {% if m['estado'] == 'Disponible' %}
+            <span class="estado disponible">Disponible</span>
+          {% else %}
+            <span class="estado no-disponible">No disponible</span>
+          {% endif %}
+        </td>
+        <td>
+          <a href="{{ url_for('admin.cambiar_estado_mesa', id_mesa=m['id_mesa']) }}" class="btn btn-edit">Cambiar Estado</a>
+          <a href="{{ url_for('admin.eliminar_mesa', id_mesa=m['id_mesa']) }}" class="btn btn-delete"
+             onclick="return confirm('¿Estás seguro de eliminar esta mesa?')">Eliminar</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4">No hay mesas registradas</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- BOTÓN VOLVER -->
+    <div class="volver-wrap">
+      <a href="{{ url_for('admin.admin_dashboard') }}" class="volver">← Volver al Dashboard</a>
+    </div>
+
+  </div>
+
+  <footer>
+    &copy; 2025 Parrilla 51 - Todos los derechos reservados
+  </footer>
+
+</body>
+</html>

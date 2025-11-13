@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mis Reservas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/cliente_ver_reservas.css') }}">
+    <style>
+        .reservas-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .reserva-card {
+            background: var(--bg-card);
+            border: 2px solid var(--color-gold);
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+        }
+        .reserva-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(255, 215, 0, 0.3);
+        }
+        .reserva-card h3 {
+            color: var(--color-gold);
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--color-gold);
+            padding-bottom: 10px;
+        }
+        .reserva-card p {
+            margin: 10px 0;
+            color: var(--text-primary);
+        }
+        .reserva-card strong {
+            color: var(--color-gold);
+        }
+        .mensaje-vacio {
+            text-align: center;
+            padding: 60px 20px;
+            font-size: 18px;
+            color: var(--text-secondary);
+        }
+        h2 {
+            text-align: center;
+            color: var(--color-gold);
+            font-size: 36px;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="container mt-3">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+    <h2>📅 Mis Reservas</h2>
+
+    {% if reservas %}
+    <div class="reservas-container">
+        {% for r in reservas %}
+        <div class="reserva-card">
+            <h3>Reserva #{{ r.id_reserva }}</h3>
+            <p><strong>Nombre:</strong> {{ r.nombre or "No asignado" }}</p>
+            <p><strong>Fecha:</strong> {{ r.fecha }}</p>
+            <p><strong>Hora:</strong> {{ r.hora }}</p>
+            <p><strong>Personas:</strong> {{ r.cant_personas }}</p>
+            <p><strong>Estado:</strong> <span class="estado {{ r.estado or 'pendiente' }}">{{ r.estado or "pendiente" }}</span></p>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="mensaje-vacio">
+        <p>📭 No tienes reservas registradas.</p>
+    </div>
+    {% endif %}
+
+    <div class="volver-wrap">
+        <a href="{{ url_for('dashboard.cliente_dashboard') }}" class="volver">
+        ⬅ Volver
+        </a>
+    </div>
+
+    <footer>
+        © 2025 Parrilla 51 - Todos los derechos reservados
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/cliente_ver_reservas.js') }}"></script>
+</body>
+</html>
