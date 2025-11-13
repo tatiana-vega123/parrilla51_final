@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Carrito</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/cliente_carrito.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <style>
+    .opciones {
+      background: var(--bg-card);
+      padding: 20px;
+      border-radius: 10px;
+      margin: 20px 0;
+    }
+    .opciones h4 {
+      color: var(--color-gold);
+      margin-bottom: 15px;
+    }
+    .opciones label {
+      display: block;
+      margin: 10px 0;
+      color: var(--text-primary);
+    }
+    .confirmar {
+      background: var(--color-gold);
+      color: #000;
+      padding: 12px 30px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+    .confirmar:hover {
+      background: var(--color-gold-hover);
+    }
+  </style>
+</head>
+<body>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="container mt-3">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+  <div class="container">
+    <h2>🛒 Tu Carrito</h2>
+    {% if carrito %}
+    <form method="POST" action="{{ url_for('cliente.hacer_pedido') }}">
+
+      <table>
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Precio</th>
+            <th>Subtotal</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in carrito %}
+          <tr>
+            <td>{{ item.nombre }}</td>
+            <td>{{ item.cantidad }}</td>
+            <td>${{ "{:,.0f}".format(item.precio).replace(",", ".") }}</td>
+            <td>${{ "{:,.0f}".format(item.precio * item.cantidad).replace(",", ".") }}</td>
+            <td>
+              <a href="{{ url_for('cliente.eliminar_carrito', id_producto=item.id_producto) }}">
+                <button type="button" class="btn btn-eliminar">❌</button>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      
+      <h3 id="total">Total: ${{ "{:,.0f}".format(total).replace(",", ".") }}</h3>
+
+      <div class="opciones" id="acompaniamientos">
+        <h4 id="titulo-acomp">🍽️ Escoge 2 acompañamientos (obligatorio)</h4>
+        {% for a in acompanamientos %}
+        <label>
+          <input 
+            type="checkbox" 
+            name="acompanamientos" 
+            value="{{ a.id_producto }}" 
+            data-precio="{{ a.precio }}"
+            data-nombre="{{ a.nombre|lower }}"
+          >
+          <span class="nombre-acomp">{{ a.nombre }}</span> - ${{ "{:,.0f}".format(a.precio).replace(",", ".") }}
+        </label><br>
+        {% endfor %}
+      </div>
+
+      <div style="margin-top: 15px;">
+        <label><input type="radio" name="tipo_entrega" value="restaurante" checked onchange="mostrarCampos()"> En mesa</label>
+        <label><input type="radio" name="tipo_entrega" value="domicilio" onchange="mostrarCampos()"> Domicilio</label>
+      </div>
+
+      <div id="datos-domicilio" style="display: none; margin-top: 10px;">
+        <label for="direccion">🏠 Dirección de entrega</label>
+        <p><input type="text" name="direccion" id="direccion" placeholder="Ingresa tu dirección"></p>
+        <label for="telefono_envio">📞 Teléfono de contacto</label>
+        <p><input type="tel" name="telefono_envio" id="telefono_envio" pattern="[0-9]{10}" placeholder="Ej: 3112345678"></p>
+      </div>
+
+      <div class="opciones">
+        <h4>💳 Método de pago</h4>
+        <label><input type="radio" name="metodo_pago" value="efectivo" checked> Efectivo</label>
+      </div>
+
+      <button type="submit" class="confirmar">Confirmar Pedido</button>
+    </form>
+    {% else %}
+    <p>Tu carrito está vacío.</p>
+    {% endif %}
+    <div class="text-center mt-4">
+      <a href="{{ url_for('dashboard.cliente_dashboard') }}" class="volver">⬅ Volver</a>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="{{ url_for('static', filename='js/cliente_carrito.js') }}"></script>
+</body>
+</html>

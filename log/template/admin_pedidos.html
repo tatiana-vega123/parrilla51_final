@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Pedidos - Parrilla 51</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="container mt-3">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+  <nav class="navbar">
+    <div class="brand">
+      <img src="/static/logo.png" alt="" style="height:35px;"> Parrilla 51
+    </div>
+    <div class="links">
+      <a href="{{ url_for('admin.admin_dashboard') }}">Dashboard</a>
+    </div>
+  </nav>
+
+  <div class="container my-4">
+    <h2>Gestión de Pedidos y Domicilios</h2>
+
+    <div class="table-responsive">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Cliente</th>
+            <th>Fecha</th>
+            <th>Hora</th>
+            <th>Total</th>
+            <th>Tipo</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pedido in pedidos %}
+          <tr>
+            <td>{{ pedido.id_pedido }}</td>
+            <td>{{ pedido.nombre }} {{ pedido.apellido }}</td>
+            <td>{{ pedido.fecha }}</td>
+            <td>{{ pedido.hora }}</td>
+            <td>${{ "{:,.0f}".format(pedido.total) }}</td>
+            <td>{{ pedido.tipo_entrega }}</td>
+            <td>
+              <span class="badge bg-{% if pedido.estado == 'entregado' %}success{% elif pedido.estado == 'cancelado' %}danger{% else %}warning{% endif %}">
+                {{ pedido.estado }}
+              </span>
+            </td>
+            <td>
+              <a href="{{ url_for('admin.cambiar_estado_pedido', id_pedido=pedido.id_pedido, nuevo_estado='entregado') }}" 
+                 class="btn btn-sm btn-success">Entregado</a>
+              <a href="{{ url_for('admin.cambiar_estado_pedido', id_pedido=pedido.id_pedido, nuevo_estado='cancelado') }}" 
+                 class="btn btn-sm btn-danger">Cancelar</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="volver-wrap">
+      <a href="{{ url_for('admin.admin_dashboard') }}" class="volver">← Volver al Dashboard</a>
+    </div>
+  </div>
+
+  <footer>
+    © 2025 Parrilla 51 - Todos los derechos reservados
+  </footer>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Hacer Reserva</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/cliente_reservar.css') }}">
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      width: 100%;
+    }
+    form {
+      background: var(--bg-card);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: var(--shadow);
+    }
+    form h2 {
+      text-align: center;
+      color: var(--color-gold);
+      margin-bottom: 25px;
+    }
+    .volver-wrap {
+      text-align: center;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <!--Formulario para hacer reservas-->
+  <div class="container">
+    <form method="POST" action="{{ url_for('cliente.cliente_reservar') }}" onsubmit="return confirmarReserva(event)">
+      <h2>📅 Hacer Reserva</h2>
+
+      <label for="nombre">Nombre completo</label>
+      <input type="text" id="nombre" name="nombre" placeholder="Ingrese su nombre completo" 
+      oninput="this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')" required>
+
+      <label for="documento">Documento</label>
+      <input type="number" id="documento" name="documento" placeholder="Ingrese su número de documento" required>
+
+      <label for="fecha">📆 Fecha</label>
+      <input type="date" id="fecha" name="fecha" required>
+
+      <label for="hora">🕐 Hora</label>
+      <select id="hora" name="hora" required>
+        <option value="">Seleccione una hora</option>
+        <option value="11:30am-1:30pm">11:30am - 1:30pm</option>
+        <option value="12:00pm-2:00pm">12:00pm - 2:00pm</option>
+        <option value="12:30pm-2:30pm">12:30pm - 2:30pm</option>
+        <option value="1:00pm-3:00pm">1:00pm - 3:00pm</option>
+        <option value="1:30pm-3:30pm">1:30pm - 3:30pm</option>
+        <option value="2:00pm-4:00pm">2:00pm - 4:00pm</option>
+        <option value="2:30pm-4:30pm">2:30pm - 4:30pm</option>
+      </select>
+
+      <label for="cant_personas">👥 Cantidad de Personas</label>
+      <input type="number" id="cant_personas" name="cant_personas" min="1" max="10" onkeypress="return false" required >
+
+      <label for="tipo_evento">📋 Tipo de evento</label>
+      <select id="tipo_evento" name="tipo_evento" required>
+        <option value="">Seleccione</option>
+        <option value="almuerzo">Almuerzo</option>
+        <option value="reunion">Reunión</option>
+        <option value="celebracion">Celebración</option>
+      </select>
+
+      <label for="comentarios">📝 Comentarios</label>
+      <textarea id="comentarios" name="comentarios" rows="3" placeholder="Detalles adicionales"></textarea>
+
+      <label for="telefono">📞 Teléfono</label>
+      <input type="tel" id="telefono" name="telefono" pattern="[0-9]{10}" required placeholder="Ej: 3112345678">
+
+      <button type="submit" class="btn btn-primary w-100">Reservar</button>
+    </form>
+
+    <div class="volver-wrap">
+      <a href="{{ url_for('dashboard.cliente_dashboard') }}" class="volver">
+       ⬅ Volver
+      </a>
+    </div>
+  </div>
+
+  <!-- Modal antes de confirmar reserva -->
+  <div class="modal fade" id="reservaConfirmada" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content p-3 rounded-4" style="background-color: #2f2f2f; color: #fff;">
+        <div class="text-center mb-3">
+          <h5 class="fw-bold text-success">🎉 ¡Reserva Confirmada!</h5>
+          <p><span id="reserva-nombre"></span>, tu reserva ha sido creada con éxito</p>
+        </div>
+
+        <!-- Resumen de la reserva  -->
+        <div class="d-flex justify-content-around text-center border rounded py-2 mb-3" style="background:#3a3a3a; border:1px solid #555;">
+          <div>
+            <i class="bi bi-people-fill fs-5"></i>
+            <div id="resumen-personas" class="small mt-1"></div>
+          </div>
+          <div>
+            <i class="bi bi-calendar-event fs-5"></i>
+            <div id="resumen-fecha" class="small mt-1"></div>
+          </div>
+          <div>
+            <i class="bi bi-clock fs-5"></i>
+            <div id="resumen-hora" class="small mt-1"></div>
+          </div>
+        </div>
+
+        <div class="text-center">
+          <button type="button" class="btn btn-danger rounded-pill px-4" onclick="enviarReserva()">Finalizar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ url_for('static', filename='js/cliente_reservar.js') }}"></script>
+</body>
+</html>

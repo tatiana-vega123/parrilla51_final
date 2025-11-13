@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ 'Editar Mesa' if mesa else 'Agregar Mesa' }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+</head>
+<body>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="container mt-3">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="brand">
+    <img src="{{ url_for('static', filename='image.png') }}" alt="Logo Parrilla 51">
+    Parrilla 51
+  </div>
+  <div class="links">
+ 
+  </div>
+  <a href="{{ url_for('logout') }}" class="btn">Salir</a>
+</nav>
+
+<!-- FORMULARIO -->
+<div class="container">
+  <h1>{{ 'Editar Mesa' if mesa else 'Agregar Mesa' }}</h1>
+  <form method="POST" action="{% if mesa %}{{ url_for('editar_mesa', id_mesa=mesa.id_mesa) }}{% else %}{{ url_for('agregar_mesa') }}{% endif %}">
+    <label for="numero">Número de Mesa</label>
+    <input id="numero" type="number" name="numero" 
+           value="{{ mesa.numero if mesa else '' }}" min="1" required>
+
+    <label for="capacidad">Capacidad</label>
+    <input id="capacidad" type="number" name="capacidad" 
+           value="{{ mesa.capacidad if mesa else '' }}" min="1" required>
+
+    <button type="submit">Guardar</button>
+  </form>
+
+  <div class="text-center">
+    <a href="{{ url_for('inventario') }}" class="volver">⬅ Volver</a>
+  </div>
+</div>
+
+<footer>
+  © 2025 Parrilla 51 - Todos los derechos reservados
+</footer>
+
+</body>
+</html>

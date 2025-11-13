@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar Sesión - Parrilla 51</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="container mt-3">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<div class="container d-flex align-items-center justify-content-center vh-100">
+  <div class="card shadow-lg" style="width: 100%; max-width: 400px;">
+    <div class="card-body">
+      <h2 class="text-center mb-4">Iniciar Sesión</h2>
+      
+      {% if mensaje %}
+      <div class="alert alert-danger text-center" role="alert">
+          {{ mensaje }}
+      </div>
+      {% endif %}
+
+      <form action="{{ url_for('auth.login') }}" method="post">
+        <div class="mb-3">
+          <label for="correo" class="form-label">Correo</label>
+          <input type="email" class="form-control" id="correo" name="txtCorreo" placeholder="Ingrese su correo" required>
+        </div>
+
+        <div class="mb-3" style="position: relative;">
+          <label for="password" class="form-label">Contraseña</label>
+          <input type="password" class="form-control" id="password" name="txtPassword" placeholder="Ingrese su contraseña" required>
+          <i class="bi bi-eye toggle-password" id="togglePassword" style="position: absolute; right: 12px; top: 38px; cursor: pointer;"></i>
+        </div>
+
+        <div class="d-grid gap-2">
+          <button type="submit" class="btn btn-primary btn-lg">Ingresar</button>
+        </div>
+
+        <div class="text-center mt-3">
+          <a href="{{ url_for('auth.registro') }}" class="btn btn-link">¿No tienes cuenta? Regístrate aquí</a>
+          <br>
+          <a href="{{ url_for('auth.forgot_password') }}" style="color: var(--color-gold);">¿Olvidaste tu contraseña?</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const togglePassword = document.getElementById("togglePassword");
+  const passwordInput = document.getElementById("password");
+
+  togglePassword.addEventListener("click", function () {
+    const type = passwordInput.type === "password" ? "text" : "password";
+    passwordInput.type = type;
+    this.classList.toggle("bi-eye");
+    this.classList.toggle("bi-eye-slash");
+  });
+</script>
+</body>
+</html>

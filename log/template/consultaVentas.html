@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Consultar Pedidos y Domicilios</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+</head>
+<body>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="container mt-3">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+    <div class="header-container">
+        <nav class="navbar"> 
+            <div class="header">
+                <img src="{{ url_for('static', filename='image.png') }}" alt="Logo Parrilla 51" class="logo">
+                <h1 class="nombre-logo">Parrilla 51</h1>
+            </div>
+         
+            <a href="{{ url_for('auth.logout') }}" class="btn">Salir</a>
+        </nav>
+    </div>
+
+    <main>
+        <!-- TABLA DE PEDIDOS EN RESTAURANTE -->
+        <h2>🍽️ Pedidos en Restaurante</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID Pedido</th>
+                    <th>Cliente</th>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Método de Pago</th>
+                    <th>Teléfono</th>
+                    <th>Total</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in pedidos_restaurante %}
+                <tr>
+                    <td>{{ p.id_pedido }}</td>
+                    <td>{{ p.cliente }}</td>
+                    <td>{{ p.fecha }}</td>
+                    <td>{{ p.hora }}</td>
+                    <td>{{ p.metodo_pago }}</td>
+                    <td>{{ p.telefono }}</td>
+                    <td>${{ p.total }}</td>
+                    <td>
+                        <span class="estado {% if p.estado == 'entregado' %}entregado{% else %}cancelado{% endif %}">
+                            {{ p.estado|capitalize }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- TABLA DE PEDIDOS A DOMICILIO -->
+        <h2>🚚 Pedidos a Domicilio</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID Pedido</th>
+                    <th>Cliente</th>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Método de Pago</th>
+                    <th>Teléfono</th>
+                    <th>Total</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in pedidos_domicilio %}
+                <tr>
+                    <td>{{ p.id_pedido }}</td>
+                    <td>{{ p.cliente }}</td>
+                    <td>{{ p.fecha }}</td>
+                    <td>{{ p.hora }}</td>
+                    <td>{{ p.metodo_pago }}</td>
+                    <td>{{ p.telefono }}</td>
+                    <td>${{ p.total }}</td>
+                    <td>
+                        <span class="estado {% if p.estado == 'entregado' %}entregado{% else %}cancelado{% endif %}">
+                            {{ p.estado|capitalize }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="text-center">
+            <a href="{{ url_for('admin.admin_dashboard') }}" class="volver">⬅️ Volver al Dashboard</a>
+        </div>
+    </main>
+
+    <footer>
+        © 2025 - Panel de Administración
+    </footer>
+</body>
+</html>

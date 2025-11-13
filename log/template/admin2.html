@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Administrador</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+  <style>
+    .password-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .password-wrapper input {
+      flex: 1;
+      padding-right: 35px;
+    }
+    .toggle-pass {
+      position: absolute;
+      right: 10px;
+      cursor: pointer;
+      font-size: 18px;
+      user-select: none;
+    }
+    .tab-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .tab-buttons button {
+      flex: 1;
+      padding: 8px;
+      border-radius: 6px;
+      background: var(--border-color);
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .tab-buttons button:hover { 
+      background: #666; 
+    }
+    .tab-section { 
+      display: none; 
+    }
+  </style>
+</head>
+<body>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="container mt-3">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+  <nav class="navbar">
+    <div class="brand">
+      <img src="/static/logo.png" alt="" style="height:35px;"> Parrilla 51
+    </div>
+    <div class="links" style="margin-left:-100px;">
+    </div>
+    <a href="{{ url_for('auth.logout') }}" class="logout-btn">Salir</a>
+  </nav>
+
+  <div class="container">
+    <h1>Bienvenido Administrador</h1>
+  </div>
+
+  <div class="acciones">
+    <div class="card">
+      <h3>📦 Productos</h3>
+      <a href="{{ url_for('admin.admin_productos') }}">Ir</a>
+    </div>
+    <div class="card">
+      <h3>👤 Asignación Rol</h3>
+      <a href="{{ url_for('admin.admin_usuarios') }}">Ir</a>
+    </div>
+    <div class="card">
+      <h3>📅 Consultar Reservas</h3>
+      <a href="{{ url_for('admin.admin_reservas') }}">Ir</a>
+    </div>
+    <div class="card">
+      <h3>🛒 Consultar Pedidos y Domicilios</h3>
+      <a href="{{ url_for('admin.admin_pedidos') }}">Ir</a>
+    </div>
+    <div class="card">
+      <h3>💰 Consultar Ventas</h3>
+      <a href="{{ url_for('reportes.reportes_ventas') }}">Ir</a>
+    </div>
+    <div class="card">
+      <h3>🍔 Inventario</h3>
+      <a href="{{ url_for('admin.admin_inventario') }}">Ir</a>
+    </div>
+    <div class="card">
+      <h3>🥕 Consultar Insumos</h3>
+      <a href="{{ url_for('admin.admin_inventario') }}">Ir</a>
+    </div>
+    <div class="card">
+      <h3>📊 Reportes</h3>
+      <a href="{{ url_for('reportes.reportes_inventario') }}">Ir</a>
+    </div>
+    <div class="card">
+      <h3>👨‍💼 Mi Perfil</h3>
+      <a href="#" id="perfilBtn">Ir</a>
+    </div>
+  </div>
+
+  <!-- Modal Perfil -->
+  <div id="perfilModal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="closeModal">&times;</span>
+      <h2>Mi Perfil</h2>
+
+      <div class="tab-buttons">
+        <button onclick="showSection('perfil-section')">Editar Info</button>
+        <button onclick="showSection('pass-section')">Cambiar Contraseña</button>
+      </div>
+
+      <div id="perfil-section" class="tab-section">
+        <form id="perfilForm">
+          <input type="text" id="nombre" name="nombre" placeholder="Nombre">
+          <input type="text" id="apellido" name="apellido" placeholder="Apellido">
+          <input type="text" id="telefono" name="telefono" placeholder="Teléfono">
+          <input type="text" id="direccion" name="direccion" placeholder="Dirección">
+          <input type="email" id="correo" name="correo" placeholder="Correo">
+          <button type="submit">Guardar Cambios</button>
+        </form>
+      </div>
+
+      <div id="pass-section" class="tab-section">
+        <form id="passForm">
+          <div class="password-wrapper">
+            <input type="password" id="oldPass" placeholder="Contraseña Actual" required>
+            <span class="toggle-pass" onclick="togglePassword('oldPass', this)">👁️</span>
+          </div>
+          <div class="password-wrapper">
+            <input type="password" id="newPass" placeholder="Nueva Contraseña" required>
+            <span class="toggle-pass" onclick="togglePassword('newPass', this)">👁️</span>
+          </div>
+          <div class="password-wrapper">
+            <input type="password" id="confirmPass" placeholder="Confirmar Nueva Contraseña" required>
+            <span class="toggle-pass" onclick="togglePassword('confirmPass', this)">👁️</span>
+          </div>
+          <button type="submit">Cambiar Contraseña</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const modal = document.getElementById('perfilModal');
+    const btn = document.getElementById('perfilBtn');
+    const span = document.getElementById('closeModal');
+
+    btn.onclick = function(e) {
+      e.preventDefault();
+      fetch('/admin/api/perfil')
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) {
+            alert('Debes iniciar sesión');
+            return;
+          }
+          document.getElementById('nombre').value = data.nombre;
+          document.getElementById('apellido').value = data.apellido;
+          document.getElementById('telefono').value = data.telefono;
+          document.getElementById('direccion').value = data.direccion;
+          document.getElementById('correo').value = data.correo;
+          modal.style.display = "flex";
+          showSection('perfil-section');
+        });
+    }
+    
+    span.onclick = function() { 
+      modal.style.display = "none"; 
+    }
+    
+    window.onclick = function(e) { 
+      if (e.target == modal) modal.style.display = "none"; 
+    }
+
+    function showSection(id) {
+      document.querySelectorAll('.tab-section').forEach(sec => sec.style.display = "none");
+      document.getElementById(id).style.display = "block";
+    }
+    
+    function togglePassword(id, el) {
+      const input = document.getElementById(id);
+      if (input.type === "password") { 
+        input.type = "text"; 
+        el.textContent = "🙈"; 
+      } else { 
+        input.type = "password"; 
+        el.textContent = "👁️"; 
+      }
+    }
+
+    document.getElementById('perfilForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const payload = {
+        nombre: nombre.value,
+        apellido: apellido.value,
+        telefono: telefono.value,
+        direccion: direccion.value,
+        correo: correo.value
+      };
+      fetch('/admin/api/perfil', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(r => r.json()).then(resp => {
+        alert(resp.mensaje);
+        modal.style.display = 'none';
+      });
+    });
+
+    document.getElementById('passForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const oldPass = document.getElementById('oldPass').value;
+      const newPass = document.getElementById('newPass').value;
+      const confirmPass = document.getElementById('confirmPass').value;
+      
+      if (newPass !== confirmPass) { 
+        alert('Las contraseñas no coinciden'); 
+        return; 
+      }
+      
+      fetch('/admin/api/cambiar_contrasena', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ oldPass, newPass })
+      }).then(r => r.json()).then(resp => {
+        alert(resp.mensaje);
+        if (resp.mensaje.includes('correctamente')) {
+          modal.style.display = 'none';
+        }
+      });
+    });
+  </script>
+
+  <footer>
+    © 2025 Parrilla 51 - Todos los derechos reservados
+  </footer>
+</body>
+</html>

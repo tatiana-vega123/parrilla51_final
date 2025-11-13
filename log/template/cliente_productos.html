@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Menú</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/cliente_productos.css') }}">
+  <style>
+    .filtros {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 0;
+      padding: 20px;
+    }
+    .filtros button {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border: 2px solid var(--color-gold);
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .filtros button:hover {
+      background: var(--color-gold);
+      color: #000;
+      transform: scale(1.05);
+    }
+    .productos {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 25px;
+      padding: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .producto-card {
+      background: var(--bg-card);
+      border: 2px solid var(--color-gold);
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      transition: all 0.3s;
+      box-shadow: var(--shadow);
+    }
+    .producto-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--color-accent);
+      box-shadow: 0 5px 15px rgba(255, 68, 68, 0.3);
+    }
+    .producto-card img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+    .producto-card h3 {
+      color: var(--color-gold);
+      margin: 10px 0;
+    }
+    .acciones {
+      margin-top: 15px;
+    }
+    .acciones input[type="number"] {
+      width: 60px;
+      padding: 5px;
+      text-align: center;
+      margin-right: 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+    }
+    #imagen-fondo {
+      text-align: center;
+      margin: 30px 0;
+      opacity: 0.2;
+    }
+    #imagen-fondo img {
+      max-width: 400px;
+      height: auto;
+    }
+    #mensaje-agregado {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: var(--color-gold);
+      color: #000;
+      padding: 15px 25px;
+      border-radius: 8px;
+      font-weight: bold;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      display: none;
+      animation: slideIn 0.5s ease;
+      z-index: 1000;
+    }
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    .texto-info {
+      text-align: center;
+      padding: 20px;
+      background: var(--bg-card);
+      margin: 20px auto;
+      max-width: 800px;
+      border-radius: 10px;
+    }
+    .texto-info h4 {
+      color: var(--color-gold);
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="container mt-3">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+    <div class="texto-info">
+      <h4>Todos nuestros cortes serán servidos con dos (2) acompañamientos</h4>
+      <p>Bebida no incluida</p>
+    </div>
+
+    <div class="filtros">
+        <button onclick="filtrar('cerdo')">Cerdo</button>
+        <button onclick="filtrar('res')">Res</button>
+        <button onclick="filtrar('pollo')">Pollo</button>
+        <button onclick="filtrar('plato del dia')">Plato del día</button>
+        <button onclick="filtrar('acompañamientos')">Acompañamientos</button>
+        <button onclick="filtrar('entradas')">Entradas</button>
+        <button onclick="filtrar('platos combinados')">Platos combinados</button>
+        <button onclick="filtrar('cortes gruesos')">Cortes gruesos</button>
+        <button onclick="filtrar('bebidas')">Bebidas</button>
+        <button onclick="filtrar('adicionales')">Adicionales</button>
+    </div>
+
+    <div id="imagen-fondo">
+        <img src="{{ url_for('static', filename='img/Vaca.png') }}" alt="vaca">
+    </div>
+
+    <div class="productos">
+        {% for p in productos %}
+        <div class="card producto-card" 
+            data-categoria="{{ p.get('nombre_categoria', 'sin categoría') | trim | lower }}" 
+            style="display:none;">   
+
+            {% if p.imagen %}
+                <img src="{{ url_for('static', filename='img/' ~ p.imagen) }}" alt="{{ p.nombre }}">
+            {% else %}
+                <img src="{{ url_for('static', filename='no-image.png') }}" alt="{{ p.nombre }}">
+            {% endif %}
+
+            <h3>{{ p.nombre }}</h3>
+            <p><strong>Precio:</strong> COP ${{ "{:,.0f}".format(p.precio).replace(",", ".") }}</p>
+            <p><strong>Categoría:</strong> {{ p.get('nombre_categoria', 'Sin categoría') }}</p>
+            <p><strong>Descripción:</strong> {{ p.get('descripcion', 'Sin descripción') }}</p>
+
+            <div class="acciones">
+                <form method="POST" action="{{ url_for('cliente.agregar_carrito', id_producto=p.id_producto) }}" onsubmit="mostrarMensaje(event)">
+                    <input type="number" name="cantidad" value="1" min="1">
+                    <button type="submit" class="btn">🛒 Agregar</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div id="mensaje-agregado">✅ Producto agregado al carrito</div>
+
+    <div class="text-center" style="margin: 40px 0;">
+      <a href="{{ url_for('dashboard.cliente_dashboard') }}" class="volver">⬅ Volver</a>
+    </div>
+
+<script src="{{ url_for('static', filename='js/cliente_productos.js') }}"></script>
+</body>
+</html>
