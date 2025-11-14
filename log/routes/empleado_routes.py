@@ -180,6 +180,7 @@ def cambiar_estado_mesa(id_mesa):
 
     return jsonify({"ok": True, "estado": nuevo_estado})
 
+
 #historial_pagos
 @empleado_bp.route('/empleado/historial_pagos', methods=['GET'])
 def historial_pagos_restaurante():
@@ -188,51 +189,70 @@ def historial_pagos_restaurante():
         flash(mensaje, 'danger')
         return redirect(url_for('auth.login'))
 
-    cur = mysql.connection.cursor()
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     query = request.args.get("query", "").strip()
 
+    # ==========================
+    # CONSULTA CON BÚSQUEDA
+    # ==========================
     if query:
-        cur.execute("""
-            SELECT * FROM pagos_restaurante
+        sql = """
+            SELECT *
+            FROM pagos_restaurante
             WHERE CAST(id_pago_restaurante AS CHAR) LIKE %s
                OR DATE_FORMAT(fecha, '%%Y-%%m-%%d') LIKE %s
                OR hora LIKE %s
             ORDER BY fecha DESC, hora DESC
-        """, (f"%{query}%", f"%{query}%", f"%{query}%"))
+        """
+        params = (f"%{query}%", f"%{query}%", f"%{query}%")
+        cur.execute(sql, params)
     else:
         cur.execute("SELECT * FROM pagos_restaurante ORDER BY fecha DESC, hora DESC")
 
     pagos = cur.fetchall()
 
+    # ==========================
+    # FORMATEO DE FECHA BONITA
+    # ==========================
+    meses = {
+        '01': 'Enero', '02': 'Febrero', '03': 'Marzo', '04': 'Abril',
+        '05': 'Mayo', '06': 'Junio', '07': 'Julio', '08': 'Agosto',
+        '09': 'Septiembre', '10': 'Octubre', '11': 'Noviembre', '12': 'Diciembre'
+    }
+
     historial_por_fecha = {}
 
     for pago in pagos:
+
+        # Obtener detalles
         cur.execute("""
             SELECT d.*, p.nombre
             FROM detalle_pedido_restaurante d
             JOIN productos p ON d.id_producto = p.id_producto
             WHERE d.id_pago_restaurante = %s
         """, (pago["id_pago_restaurante"],))
-        detalles = cur.fetchall()
+        pago["detalles"] = cur.fetchall()
 
-        pago["detalles"] = detalles
+        # Convertir fecha → YYYY-MM-DD
+        fecha_str = pago["fecha"].strftime("%Y-%m-%d")
 
-        fecha = pago["fecha"].strftime("%Y-%m-%d")
-        if fecha not in historial_por_fecha:
-            historial_por_fecha[fecha] = []
-        historial_por_fecha[fecha].append(pago)
+        # Formatear "13 Noviembre 2025"
+        yyyy, mm, dd = fecha_str.split("-")
+        fecha_bonita = f"{int(dd)} {meses[mm]} {yyyy}"
+
+        # Agrupar por fecha bonita
+        if fecha_bonita not in historial_por_fecha:
+            historial_por_fecha[fecha_bonita] = []
+
+        historial_por_fecha[fecha_bonita].append(pago)
 
     cur.close()
+
     return render_template(
         'historial_pagos_restaurante.html',
         historial_por_fecha=historial_por_fecha,
         historial=pagos
     )
-
-    cur.close()
-    return render_template('historial_pagos_restaurante.html', historial=historial)
-
-
 # ===============================
 # REGISTRAR PEDIDO
 # ===============================
@@ -266,7 +286,7 @@ def registrar_pedido():
                 'nombre_categoria': c[1]
             })
 
-    # ✅ Solo productos disponibles con stock
+    # ✅ TRAER TODOS LOS PRODUCTOS (sin filtrar por estado)
     cur.execute("""
         SELECT 
             p.id_producto, 
@@ -278,7 +298,7 @@ def registrar_pedido():
             c.nombre_categoria
         FROM productos p
         LEFT JOIN categorias c ON p.cod_categoria = c.id_categoria
-        WHERE p.estado = 'Disponible' AND p.cantidad > 0
+        WHERE p.cantidad > 0
         ORDER BY c.nombre_categoria, p.nombre
     """)
     productos_raw = cur.fetchall()
@@ -310,6 +330,7 @@ def registrar_pedido():
 
     return render_template("registrar_empleado.html", productos=productos, categorias=categorias)
 
+
 # ===============================
 # ACTUALIZAR ESTADO PRODUCTO
 # ===============================
@@ -323,7 +344,7 @@ def actualizar_estado_producto():
         return jsonify({"success": False, "msg": "⚠️ Datos incompletos"}), 400
 
     try:
-        cur = mysql.connection.cursor()
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         
         cur.execute("SELECT nombre FROM productos WHERE id_producto = %s", (id_producto,))
         producto = cur.fetchone()
