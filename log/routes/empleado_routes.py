@@ -632,6 +632,27 @@ def historial_ordenes_empleado():
         filtros=filtros
     )
 
+# ===============================
+# RESERVAS
+# ===============================
+@empleado_bp.route('/empleado/reservas')
+def reservas_empleado():
+    es_empleado, mensaje = verificar_empleado()
+    if not es_empleado:
+        flash(mensaje, 'danger')
+        return redirect(url_for('auth.login'))
+    
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT * FROM reservas
+        WHERE estado IN ('Pendiente', 'Confirmada')
+        ORDER BY fecha ASC, hora ASC
+    """)
+    reservas = cur.fetchall()
+    cur.close()
+    
+    today = str(date.today())
+    return render_template('reservas_empleado.html', reservas=reservas, today=today)
 
 # ===============================
 # BUSCAR RESERVAS

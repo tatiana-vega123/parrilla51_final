@@ -255,6 +255,16 @@
               </span>
             </div>
           </div>
+          <!-- NUEVO CAMPO: CONFIRMAR CONTRASEÑA -->
+          <div class="mb-3">
+            <label>Confirmar Nueva Contraseña</label>
+            <div class="input-group">
+              <input type="password" class="form-control" id="confirmPass" required>
+              <span class="input-group-text" onclick="togglePassword('confirmPass', this)">
+                <i class="bi bi-eye-slash"></i>
+              </span>
+            </div>
+          </div>
           <button type="submit" class="btn btn-primary w-100">Cambiar Contraseña</button>
         </form>
       </div>
@@ -314,10 +324,17 @@
     document.getElementById("formContrasena").addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const data = {
-        oldPass: document.getElementById("oldPass").value,
-        newPass: document.getElementById("newPass").value
-      };
+      const oldPass = document.getElementById("oldPass").value;
+      const newPass = document.getElementById("newPass").value;
+      const confirmPass = document.getElementById("confirmPass").value;
+
+      // VALIDACIÓN: Las contraseñas deben coincidir
+      if (newPass !== confirmPass) {
+        alert("La nueva contraseña y la confirmación no coinciden.");
+        return;
+      }
+
+      const data = { oldPass, newPass };
 
       const res = await fetch("/empleado/api/cambiar_contrasena", {
         method: "POST",
