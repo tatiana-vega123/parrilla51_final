@@ -72,7 +72,6 @@ def cliente_productos():
 
     try:
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        # ✅ Solo productos activos/disponibles
         cur.execute("""
             SELECT 
                 p.id_producto,
@@ -80,6 +79,7 @@ def cliente_productos():
                 p.precio,
                 p.descripcion,
                 p.imagen,
+                p.estado,
                 p.cantidad,
                 c.nombre_categoria
             FROM productos p
@@ -95,7 +95,6 @@ def cliente_productos():
         print(f"Error al cargar productos: {e}")
         flash("❌ No se pudieron cargar los productos", "danger")
         return render_template('cliente_productos.html', productos=[])
-
 
 # ==================== AGREGAR AL CARRITO ====================
 @cliente_bp.route('/agregar_carrito/<int:id_producto>', methods=['POST', 'GET'])
