@@ -400,10 +400,8 @@ def actualizar_estado(id_pedido):
         'estado': nuevo_estado,
         'mensaje': f'{estado_emoji} Pedido #{id_pedido} marcado como {nuevo_estado}'
     })
-
-# ===============================
-# HISTORIAL ÓRDENES
-# ===============================
+    
+#historial ordenes 
 @empleado_bp.route('/empleado/historial_ordenes')
 def historial_ordenes_empleado():
     es_empleado, mensaje = verificar_empleado()
@@ -412,29 +410,50 @@ def historial_ordenes_empleado():
         return redirect(url_for('auth.login'))
 
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    search_query = request.args.get('search_query', '').strip()
+    search_query = request.args.get('query', '').strip()
 
+    # ========================================
+    # CONSULTA BASE CON JOIN A USUARIOS
+    # ========================================
+    sql = """
+        SELECT 
+            p.*, 
+            u.nombre AS nombre_usuario,
+            u.telefono AS telefono_usuario
+        FROM pedidos p
+        JOIN usuarios u ON p.cod_usuario = u.id_usuario
+        WHERE p.estado IN ('entregado', 'cancelado')
+    """
+
+    params = []
+
+    # =======================================
+    # BÚSQUEDA
+    # =======================================
     if search_query:
-        cur.execute("""
-            SELECT * FROM pedidos
-            WHERE estado IN ('entregado', 'cancelado')
-              AND (cod_usuario LIKE %s OR telefono LIKE %s OR estado LIKE %s)
-            ORDER BY fecha DESC, hora DESC
-        """, (
+        sql += """
+            AND (
+                u.nombre LIKE %s OR
+                u.telefono LIKE %s OR
+                p.estado LIKE %s
+            )
+        """
+        params.extend([
             f"%{search_query}%",
             f"%{search_query}%",
             f"%{search_query}%"
-        ))
-    else:
-        cur.execute("""
-            SELECT * FROM pedidos
-            WHERE estado IN ('entregado', 'cancelado')
-            ORDER BY fecha DESC, hora DESC
-        """)
+        ])
 
+    sql += " ORDER BY p.fecha DESC, p.hora DESC"
+
+    cur.execute(sql, params)
     pedidos = cur.fetchall()
+
     ordenes = []
 
+    # =======================================
+    # BUSCAR DETALLES DE CADA ORDEN
+    # =======================================
     for pedido in pedidos:
         cur.execute("""
             SELECT dp.cod_producto, dp.cantidad, dp.precio_unitario, p.nombre
@@ -455,12 +474,52 @@ def historial_ordenes_empleado():
                 'subtotal': subtotal
             })
 
+        # Datos corregidos
+        pedido['nombre'] = pedido['nombre_usuario']
+        pedido['telefono'] = pedido['telefono_usuario']
         pedido['productos'] = productos
+
         ordenes.append(pedido)
+
+    # =======================================
+    # AGRUPAR POR FECHA
+    # =======================================
+    meses = {
+        '01': 'Enero', '02': 'Febrero', '03': 'Marzo', '04': 'Abril',
+        '05': 'Mayo', '06': 'Junio', '07': 'Julio', '08': 'Agosto',
+        '09': 'Septiembre', '10': 'Octubre', '11': 'Noviembre', '12': 'Diciembre'
+    }
+
+    ordenes_por_fecha = {}
+
+    for o in ordenes:
+        fecha = str(o['fecha'])  # formato YYYY-MM-DD
+        anio = fecha[:4]
+        mes = fecha[5:7]
+        dia = fecha[8:10]
+
+        fecha_bonita = f"{dia} {meses[mes]} {anio}"
+
+        if fecha_bonita not in ordenes_por_fecha:
+            ordenes_por_fecha[fecha_bonita] = {
+                "lista": [],
+                "total_dinero": 0
+            }
+
+        ordenes_por_fecha[fecha_bonita]["lista"].append(o)
+
+        # suma dinero (salta cancelados)
+        if o['estado'] != 'cancelado':
+            ordenes_por_fecha[fecha_bonita]["total_dinero"] += float(o['total'])
 
     cur.close()
 
-    return render_template('historial_ordenes_em.html', ordenes=ordenes, search_query=search_query)
+    return render_template(
+        'historial_ordenes_em.html',
+        ordenes_por_fecha=ordenes_por_fecha,
+        query=search_query
+    )
+
 
 # ===============================
 # RESERVAS
@@ -720,7 +779,7 @@ def historial_reservas_em():
             AND (
                 nombre LIKE %s OR
                 telefono LIKE %s OR
-                documento_identidad LIKE %s
+                documento LIKE %s
             )
         """
         params.extend([f"%{query}%", f"%{query}%", f"%{query}%"])

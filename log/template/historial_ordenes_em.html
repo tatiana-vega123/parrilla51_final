@@ -4,138 +4,117 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Historial de Órdenes</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
-  <style>
-    body {
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #3a3a3a;
-      color: #f0f0f0;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      overflow-x: hidden;
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+<style>
+    /* --- Ajustes generales --- */
+    html, body {
+        height: 100%;
     }
 
+    body {
+        background-color: #3a3a3a;
+        color: #f0f0f0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        padding-bottom: 60px; /* espacio para que no tape el contenido */
+    }
+
+    /* --- Navbar --- */
     .navbar-custom {
-      background-color: #2f2f2f;
-      padding: 10px 30px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+        background-color: #2f2f2f;
+        padding: 10px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
     .navbar-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
 
     .navbar-left img {
-      height: 40px;
+        height: 40px;
     }
 
     .navbar-left span {
-      font-size: 22px;
-      font-weight: bold;
-      color: #ff4444;
+        font-size: 22px;
+        font-weight: bold;
+        color: #ff4444;
     }
 
     .btn-volver {
-      background-color: #ffd700;
-      color: black;
-      font-weight: bold;
-      border: none;
-      padding: 5px 12px;
-      border-radius: 4px;
-      text-decoration: none;
+        background-color: #ffd700;
+        color: black;
+        font-weight: bold;
+        border: none;
+        padding: 5px 12px;
+        border-radius: 4px;
+        text-decoration: none;
     }
 
     .btn-volver:hover {
-      background-color: #e6b800;
-      color: black;
+        background-color: #e6b800;
     }
 
-    /* CONTENEDOR */
-    .ordenes-container {
-      padding: 20px;
-      width: 100%;
-      max-width: 1300px;
-      margin: 0 auto;
-    }
-
-    /* CARD */
-    .card {
-      background-color: #3a3a3a;
-      color: #f0f0f0;
-      border: 1px solid #ffd700;
-      border-radius: 10px;
-      transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-      overflow-x: auto;
-    }
-
-    .card:hover {
-      transform: scale(1.02);
-      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
-    }
-
-    .card-title {
-      color: #ffd700;
-      text-align: center;
-      font-weight: bold;
-    }
-
-    .card-text b {
-      color: #ffd700;
-    }
-
-    /* TABLA */
     table {
-      width: 100%;
-      color: #fff;
-      border-collapse: collapse;
-      margin-top: 10px;
-      min-width: 400px;
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #3a3a3a;
+        color: #fff;
     }
 
     th, td {
-      border: 1px solid #ffd700;
-      padding: 8px;
-      text-align: center;
-      white-space: nowrap;
+        border: 1px solid #ffd700;
+        padding: 8px;
+        text-align: center;
     }
 
     th {
-      background-color: #2f2f2f;
-      color: #ffd700;
+        background-color: #2f2f2f;
+        color: #ffd700;
     }
 
-    tr:nth-child(even) td {
-      background-color: #444;
+    .btn-detalles {
+        background-color: #ff4444;
+        color: black;
+        font-weight: bold;
+        border: none;
+        padding: 4px 10px;
+        border-radius: 5px;
+        cursor: pointer;
     }
 
-    /* ALERTA */
-    .alert {
-      background-color: #444;
-      color: #ffd700;
-      border: 1px solid #ff4444;
+    .btn-detalles:hover {
+        background-color: #e6b800;
+        color: black;
     }
 
-    /* FOOTER */
+    .fila-cancelada {
+        background-color: #5a1f1f !important;
+        color: #ffb3b3 !important;
+        font-weight: bold;
+    }
+
+    /* --- Footer fijo --- */
     footer {
-      background: #2f2f2f;
-      color: #fff;
-      text-align: center;
-      padding: 10px;
-      border-top: 2px solid #ffd700;
-      margin-top: auto;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: #2f2f2f;
+        color: #fff;
+        text-align: center;
+        padding: 10px;
+        border-top: 2px solid #ffd700;
+        z-index: 999;
     }
-  </style>
+</style>
+
+
 </head>
+
 <body>
 
   <!-- NAVBAR -->
@@ -145,130 +124,155 @@
       <span>Parrilla 51</span>
     </div>
 
-    <a href="{{ url_for('empleado.ordenes_empleado') }}" class="btn-volver">Volver a las órdenes</a>
+    <a href="{{ url_for('empleado.ordenes_empleado') }}" class="btn-volver">Volver a Órdenes</a>
   </nav>
 
+  <div class="container mt-4">
+    <h3 class="text-center" style="color:#ffd700;">Historial de Órdenes</h3>
 
-  <!-- CONTENIDO -->
-  <div class="ordenes-container">
-    <h2 class="text-center" style="color:#ffffff; font-weight:bold;">Historial de Órdenes</h2>
+    <!-- BÚSQUEDA -->
+    <form method="GET" action="{{ url_for('empleado.historial_ordenes_empleado') }}" class="mb-4">
+      <div class="input-group">
+        <input type="text" name="query" class="form-control"
+          placeholder="Buscar por nombre, teléfono o estado..."
+          value="{{ request.args.get('query', '') }}" autocomplete="off" />
+        <button class="btn btn-warning" type="submit">Buscar</button>
+      </div>
+    </form>
 
-    <!-- 🔎 BÚSQUEDA -->
-    <div class="search-container mb-3">
-      <form action="{{ url_for('empleado.historial_ordenes_empleado') }}" method="GET">
-        <div class="input-group">
-          <input type="text" class="form-control" placeholder="Buscar por cliente, teléfono o estado..."
-                name="search_query" value="{{ search_query }}" autocomplete="off" />
-          <button class="btn btn-warning" type="submit">Buscar</button>
+    {% if ordenes_por_fecha %}
+
+      {% for fecha, data in ordenes_por_fecha.items() %}
+
+        <div class="mb-4">
+          <h4 style="color:#ffd700;">
+            {{ fecha }} — Total : ${{ data.total_dinero }}
+          </h4>
+
+          <table>
+            <thead>
+              <tr>
+                <th>ID Orden</th>
+                <th>ID Usuario</th>
+                <th>Nombre</th>
+                <th>Teléfono</th>
+                <th>Hora</th>
+                <th>Entrega</th>
+                <th>Dirección</th>
+                <th>Estado</th>
+                <th>Pago</th>
+                <th>Total</th>
+                <th>Detalles</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for o in data.lista %}
+                <tr class="{% if o.estado == 'cancelado' %}fila-cancelada{% endif %}">
+
+                  <td>{{ o.id_pedido }}</td>
+                  <td>{{ o.cod_usuario }}</td>
+                  <td>{{ o.nombre }}</td>
+                  <td>{{ o.telefono }}</td>
+                  <td>{{ o.hora }}</td>
+
+                  <td>
+                    {% if o.direccion %}Domicilio{% else %}Restaurante{% endif %}
+                  </td>
+
+                  <td>{{ o.direccion if o.direccion else '—' }}</td>
+
+                  <td>{{ o.estado }}</td>
+                  <td>{{ o.metodo_pago }}</td>
+
+                  <td>
+                    {% if o.estado == 'cancelado' %}
+                      0
+                    {% else %}
+                      ${{ o.total }}
+                    {% endif %}
+                  </td>
+
+                  <td>
+                    <button class="btn-detalles"
+                      onclick="mostrarDetalles(this, '{{ o.id_pedido }}')"
+                      data-detalles='{{ o.productos | tojson | safe }}'>
+                      Ver más
+                    </button>
+                  </td>
+
+                </tr>
+              {% endfor %}
+            </tbody>
+
+          </table>
         </div>
-      </form>
-    </div>
 
-    {% if ordenes and ordenes|length > 0 %}
-    <div class="row mt-4">
+      {% endfor %}
 
-      <!-- RESTAURANTE -->
-      <div class="col-md-6">
-        <h4 class="text-center mb-3" style="color:#ffffff; font-weight:bold;">Restaurante</h4>
-        {% for orden in ordenes %}
-          {% if (orden.estado == 'entregado' or orden.estado == 'cancelado') and not orden.direccion %}
-          <div class="mb-4">
-            <div class="card p-3">
-              <h5 class="card-title">Orden #{{ orden.id_pedido }}</h5>
-              <p class="card-text"><b>Cliente ID:</b> {{ orden.cod_usuario }}</p>
-              <p class="card-text"><b>Teléfono:</b> {{ orden.telefono }}</p>
-              <p class="card-text"><b>Fecha:</b> {{ orden.fecha }}</p>
-              <p class="card-text"><b>Hora:</b> {{ orden.hora }}</p>
-              <p class="card-text"><b>Método de Pago:</b> {{ orden.metodo_pago }}</p>
-              <p class="card-text"><b>Estado:</b> {{ orden.estado }}</p>
-              <p class="card-text"><b>Total:</b> ${{ orden.total }}</p>
-
-              <h6 class="mt-3 mb-2" style="color:#ffd700;">Detalles del pedido:</h6>
-              <div style="overflow-x:auto;">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Producto</th>
-                      <th>Cantidad</th>
-                      <th>Precio Unitario</th>
-                      <th>Subtotal</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for producto in orden.productos %}
-                    <tr>
-                      <td>{{ producto.nombre }}</td>
-                      <td>{{ producto.cantidad }}</td>
-                      <td>${{ "%.2f"|format(producto.precio_unitario) }}</td>
-                      <td>${{ "%.2f"|format(producto.subtotal) }}</td>
-                    </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-          {% endif %}
-        {% endfor %}
-      </div>
-
-      <!-- DOMICILIO -->
-      <div class="col-md-6">
-        <h4 class="text-center mb-3" style="color:#ffffff; font-weight:bold;">Domicilio</h4>
-        {% for orden in ordenes %}
-          {% if (orden.estado == 'entregado' or orden.estado == 'cancelado') and orden.direccion %}
-          <div class="mb-4">
-            <div class="card p-3">
-              <h5 class="card-title">Orden #{{ orden.id_pedido }}</h5>
-              <p class="card-text"><b>Cliente ID:</b> {{ orden.cod_usuario }}</p>
-              <p class="card-text"><b>Teléfono:</b> {{ orden.telefono }}</p>
-              <p class="card-text"><b>Dirección:</b> {{ orden.direccion }}</p>
-              <p class="card-text"><b>Fecha:</b> {{ orden.fecha }}</p>
-              <p class="card-text"><b>Hora:</b> {{ orden.hora }}</p>
-              <p class="card-text"><b>Método de Pago:</b> {{ orden.metodo_pago }}</p>
-              <p class="card-text"><b>Estado:</b> {{ orden.estado }}</p>
-              <p class="card-text"><b>Total:</b> ${{ orden.total }}</p>
-
-              <h6 class="mt-3 mb-2" style="color:#ffd700;">Detalles del pedido:</h6>
-              <div style="overflow-x:auto;">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Producto</th>
-                      <th>Cantidad</th>
-                      <th>Precio Unitario</th>
-                      <th>Subtotal</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for producto in orden.productos %}
-                    <tr>
-                      <td>{{ producto.nombre }}</td>
-                      <td>{{ producto.cantidad }}</td>
-                      <td>${{ "%.2f"|format(producto.precio_unitario) }}</td>
-                      <td>${{ "%.2f"|format(producto.subtotal) }}</td>
-                    </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-          {% endif %}
-        {% endfor %}
-      </div>
-
-    </div>
     {% else %}
-      <div class="alert text-center mt-4">
-        No hay órdenes finalizadas o canceladas en el historial.
-      </div>
+      <div class="alert alert-warning text-center">No hay órdenes finalizadas o canceladas.</div>
     {% endif %}
   </div>
 
-  <footer>
-    © 2025 Parrilla 51 - Todos los derechos reservados
-  </footer>
+  <!-- MODAL DETALLES -->
+  <div class="modal fade" id="modalDetalles" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content" style="background:#2f2f2f; color:white; border:2px solid #ffd700;">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modal-title" style="color:#ffd700;">Detalles de la Orden</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body" id="contenidoModal"></div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-warning" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>© 2025 Parrilla 51 - Todos los derechos reservados</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    function mostrarDetalles(boton, id) {
+      const productos = JSON.parse(boton.getAttribute("data-detalles"));
+
+      let html = `
+        <table class="table table-dark table-bordered text-center" style="border-color:#ffd700;">
+          <thead>
+            <tr style="color:#ffd700;">
+              <th>Producto</th>
+              <th>Cantidad</th>
+              <th>Precio Unitario</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      productos.forEach(p => {
+        html += `
+          <tr>
+            <td>${p.nombre}</td>
+            <td>${p.cantidad}</td>
+            <td>$${p.precio_unitario}</td>
+            <td>$${p.subtotal}</td>
+          </tr>
+        `;
+      });
+
+      html += "</tbody></table>";
+
+      document.getElementById("contenidoModal").innerHTML = html;
+      document.getElementById("modal-title").textContent = "Detalles de la Orden #" + id;
+
+      new bootstrap.Modal(document.getElementById("modalDetalles")).show();
+    }
+  </script>
 
 </body>
 </html>
