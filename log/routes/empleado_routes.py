@@ -689,7 +689,7 @@ def cambiar_estado_reserva(id_reserva):
 
 
 # ===============================
-# HISTORIAL RESERVAS
+# HISTORIAL RESERVAS AGRUPADO POR MES
 # ===============================
 @empleado_bp.route('/empleado/historial_reservas')
 def historial_reservas_em():
@@ -697,18 +697,66 @@ def historial_reservas_em():
     if not es_empleado:
         flash(mensaje, 'danger')
         return redirect(url_for('auth.login'))
-    
+
+    # Recibir parámetro de búsqueda
+    query = request.args.get('query', '').strip()
+
     cur = mysql.connection.cursor()
-    cur.execute("""
-        SELECT * FROM reservas
+
+    # Consulta base
+    sql = """
+        SELECT id_reserva, nombre, documento, telefono,
+               fecha, hora, cant_personas, tipo_evento, id_usuario,
+               estado, comentarios
+        FROM reservas
         WHERE estado = 'Completada'
-        ORDER BY fecha DESC
-        LIMIT 100
-    """)
+    """
+
+    params = []
+
+    # Si hay búsqueda, agregar filtros
+    if query:
+        sql += """
+            AND (
+                nombre LIKE %s OR
+                telefono LIKE %s OR
+                documento_identidad LIKE %s
+            )
+        """
+        params.extend([f"%{query}%", f"%{query}%", f"%{query}%"])
+
+    sql += " ORDER BY fecha DESC LIMIT 200"
+
+    cur.execute(sql, params)
     historial = cur.fetchall()
     cur.close()
-    
-    return render_template('historial_reservas_em.html', historial=historial)
+
+    # ================================
+    # AGRUPAR POR MES
+    # ================================
+    meses_nombres = {
+        '01': 'Enero', '02': 'Febrero', '03': 'Marzo', '04': 'Abril',
+        '05': 'Mayo', '06': 'Junio', '07': 'Julio', '08': 'Agosto',
+        '09': 'Septiembre', '10': 'Octubre', '11': 'Noviembre', '12': 'Diciembre'
+    }
+
+    historial_por_mes = {}
+
+    for r in historial:
+        fecha = str(r['fecha'])  # YYYY-MM-DD
+        mes_num = fecha[5:7]     # "06"
+        mes_nombre = meses_nombres.get(mes_num, "Desconocido")
+
+        if mes_nombre not in historial_por_mes:
+            historial_por_mes[mes_nombre] = []
+
+        historial_por_mes[mes_nombre].append(r)
+
+    return render_template(
+        'historial_reservas_em.html',
+        historial_por_mes=historial_por_mes,
+        query=query
+    )
 
 # ===============================
 # PERFIL EMPLEADO (HTML)
