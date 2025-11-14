@@ -6,112 +6,114 @@
   <title>Historial de Órdenes</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
 <style>
-    /* --- Ajustes generales --- */
-    html, body {
-        height: 100%;
-    }
+  html, body {
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      background-color: #3a3a3a;
+      color: #f0f0f0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  }
 
-    body {
-        background-color: #3a3a3a;
-        color: #f0f0f0;
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        padding-bottom: 60px; /* espacio para que no tape el contenido */
-    }
+  body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+  }
 
-    /* --- Navbar --- */
-    .navbar-custom {
-        background-color: #2f2f2f;
-        padding: 10px 30px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
+  .container {
+      flex: 1;
+      padding-bottom: 20px;
+  }
 
-    .navbar-left {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
+  .navbar-custom {
+      background-color: #2f2f2f;
+      padding: 10px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+  }
 
-    .navbar-left img {
-        height: 40px;
-    }
+  .navbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+  }
 
-    .navbar-left span {
-        font-size: 22px;
-        font-weight: bold;
-        color: #ff4444;
-    }
+  .navbar-left img {
+      height: 40px;
+  }
 
-    .btn-volver {
-        background-color: #ffd700;
-        color: black;
-        font-weight: bold;
-        border: none;
-        padding: 5px 12px;
-        border-radius: 4px;
-        text-decoration: none;
-    }
+  .navbar-left span {
+      font-size: 22px;
+      font-weight: bold;
+      color: #ff4444;
+  }
 
-    .btn-volver:hover {
-        background-color: #e6b800;
-    }
+  .btn-volver {
+      background-color: #ffd700;
+      color: black;
+      font-weight: bold;
+      border: none;
+      padding: 5px 12px;
+      border-radius: 4px;
+      text-decoration: none;
+  }
 
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        background-color: #3a3a3a;
-        color: #fff;
-    }
+  .btn-volver:hover {
+      background-color: #e6b800;
+  }
 
-    th, td {
-        border: 1px solid #ffd700;
-        padding: 8px;
-        text-align: center;
-    }
+  table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #3a3a3a;
+      color: #fff;
+  }
 
-    th {
-        background-color: #2f2f2f;
-        color: #ffd700;
-    }
+  th, td {
+      border: 1px solid #ffd700;
+      padding: 8px;
+      text-align: center;
+  }
 
-    .btn-detalles {
-        background-color: #ff4444;
-        color: black;
-        font-weight: bold;
-        border: none;
-        padding: 4px 10px;
-        border-radius: 5px;
-        cursor: pointer;
-    }
+  th {
+      background-color: #2f2f2f;
+      color: #ffd700;
+  }
 
-    .btn-detalles:hover {
-        background-color: #e6b800;
-        color: black;
-    }
+  .btn-detalles {
+      background-color: #ff4444;
+      color: black;
+      font-weight: bold;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+  }
 
-    .fila-cancelada {
-        background-color: #5a1f1f !important;
-        color: #ffb3b3 !important;
-        font-weight: bold;
-    }
+  .btn-detalles:hover {
+      background-color: #e6b800;
+      color: black;
+  }
 
-    /* --- Footer fijo --- */
-    footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background-color: #2f2f2f;
-        color: #fff;
-        text-align: center;
-        padding: 10px;
-        border-top: 2px solid #ffd700;
-        z-index: 999;
-    }
+  .fila-cancelada {
+      background-color: #5a1f1f !important;
+      color: #ffb3b3 !important;
+      font-weight: bold;
+  }
+
+  footer {
+      background-color: #2f2f2f;
+      color: #ffd700;
+      text-align: center;
+      padding: 10px;
+      border-top: 2px solid #ffd700;
+      flex-shrink: 0;
+  }
 </style>
-
 
 </head>
 
@@ -130,20 +132,111 @@
   <div class="container mt-4">
     <h3 class="text-center" style="color:#ffd700;">Historial de Órdenes</h3>
 
-    <!-- BÚSQUEDA -->
-    <form method="GET" action="{{ url_for('empleado.historial_ordenes_empleado') }}" class="mb-4">
-      <div class="input-group">
-        <input type="text" name="query" class="form-control"
-          placeholder="Buscar por nombre, teléfono o estado..."
-          value="{{ request.args.get('query', '') }}" autocomplete="off" />
-        <button class="btn btn-warning" type="submit">Buscar</button>
+    <!-- BÚSQUEDA AVANZADA -->
+    <form method="GET" 
+          action="{{ url_for('empleado.historial_ordenes_empleado') }}" 
+          class="p-3 mb-4 rounded"
+          style="background:#2f2f2f; border:2px solid #ffd700;">
+
+      <div class="d-flex align-items-end gap-3 flex-wrap">
+
+        <!-- ID Orden -->
+        <div style="min-width:120px;">
+          <label class="form-label" style="color:#ffd700;">ID Orden</label>
+          <input type="number" name="id_orden" class="form-control form-control-sm"
+                value="{{ request.args.get('id_orden','') }}" placeholder="Ej: 100">
+        </div>
+
+        <!-- ID Usuario -->
+        <div style="min-width:120px;">
+          <label class="form-label" style="color:#ffd700;">ID Usuario</label>
+          <input type="number" name="id_usuario" class="form-control form-control-sm"
+                value="{{ request.args.get('id_usuario','') }}" placeholder="Ej: 55">
+        </div>
+
+        <!-- Nombre -->
+        <div style="min-width:180px;">
+          <label class="form-label" style="color:#ffd700;">Nombre</label>
+          <input type="text" name="nombre" class="form-control form-control-sm"
+                value="{{ request.args.get('nombre','') }}" placeholder="Ej: Juan">
+        </div>
+
+        <!-- Teléfono -->
+        <div style="min-width:150px;">
+          <label class="form-label" style="color:#ffd700;">Teléfono</label>
+          <input type="text" name="telefono" class="form-control form-control-sm"
+                value="{{ request.args.get('telefono','') }}" placeholder="Ej: 310555...">
+        </div>
+
+        <!-- Fecha exacta -->
+        <div style="min-width:160px;">
+          <label class="form-label" style="color:#ffd700;">Fecha exacta</label>
+          <input type="date" name="fecha_ex" class="form-control form-control-sm"
+                value="{{ request.args.get('fecha_ex','') }}">
+        </div>
+
+        <!-- Mes -->
+        <div style="min-width:160px;">
+          <label class="form-label" style="color:#ffd700;">Mes</label>
+          <select name="mes" class="form-select form-select-sm">
+            <option value="">-- Mes --</option>
+            <option value="01" {% if request.args.get('mes')=='01' %}selected{% endif %}>Enero</option>
+            <option value="02" {% if request.args.get('mes')=='02' %}selected{% endif %}>Febrero</option>
+            <option value="03" {% if request.args.get('mes')=='03' %}selected{% endif %}>Marzo</option>
+            <option value="04" {% if request.args.get('mes')=='04' %}selected{% endif %}>Abril</option>
+            <option value="05" {% if request.args.get('mes')=='05' %}selected{% endif %}>Mayo</option>
+            <option value="06" {% if request.args.get('mes')=='06' %}selected{% endif %}>Junio</option>
+            <option value="07" {% if request.args.get('mes')=='07' %}selected{% endif %}>Julio</option>
+            <option value="08" {% if request.args.get('mes')=='08' %}selected{% endif %}>Agosto</option>
+            <option value="09" {% if request.args.get('mes')=='09' %}selected{% endif %}>Septiembre</option>
+            <option value="10" {% if request.args.get('mes')=='10' %}selected{% endif %}>Octubre</option>
+            <option value="11" {% if request.args.get('mes')=='11' %}selected{% endif %}>Noviembre</option>
+            <option value="12" {% if request.args.get('mes')=='12' %}selected{% endif %}>Diciembre</option>
+          </select>
+        </div>
+
+        <!-- Entrega -->
+        <div style="min-width:150px;">
+          <label class="form-label" style="color:#ffd700;">Entrega</label>
+          <select name="entrega" class="form-select form-select-sm">
+            <option value="">-- Tipo --</option>
+            <option value="restaurante" {% if request.args.get('entrega')=='restaurante' %}selected{% endif %}>Restaurante</option>
+            <option value="domicilio" {% if request.args.get('entrega')=='domicilio' %}selected{% endif %}>Domicilio</option>
+          </select>
+        </div>
+
+        <!-- Dirección -->
+        <div style="min-width:180px;">
+          <label class="form-label" style="color:#ffd700;">Dirección</label>
+          <input type="text" name="direccion" class="form-control form-control-sm"
+                value="{{ request.args.get('direccion','') }}" placeholder="Ej: Calle 12 #15-33">
+        </div>
+
+        <!-- Estado -->
+        <div style="min-width:150px;">
+          <label class="form-label" style="color:#ffd700;">Estado</label>
+          <select name="estado" class="form-select form-select-sm">
+            <option value="">-- Estado --</option>
+            <option value="entregado" {% if request.args.get('estado')=='entregado' %}selected{% endif %}>Entregado</option>
+            <option value="cancelado" {% if request.args.get('estado')=='cancelado' %}selected{% endif %}>Cancelado</option>
+          </select>
+        </div>
+
+        <!-- Botones -->
+        <div class="d-flex gap-2" style="min-width:200px;">
+          <button class="btn btn-warning btn-sm w-50" type="submit" style="font-weight:bold;">🔍 Buscar</button>
+          <a href="{{ url_for('empleado.historial_ordenes_empleado') }}"
+            class="btn btn-danger btn-sm w-50"
+            style="background:#ff4444; border:none; font-weight:bold;">✖ Limpiar</a>
+        </div>
+
       </div>
+
     </form>
 
     {% if ordenes_por_fecha %}
 
       {% for fecha, data in ordenes_por_fecha.items() %}
-
         <div class="mb-4">
           <h4 style="color:#ffd700;">
             {{ fecha }} — Total : ${{ data.total_dinero }}
@@ -176,9 +269,7 @@
                   <td>{{ o.telefono }}</td>
                   <td>{{ o.hora }}</td>
 
-                  <td>
-                    {% if o.direccion %}Domicilio{% else %}Restaurante{% endif %}
-                  </td>
+                  <td>{{ o.tipo_entrega.capitalize() }}</td>
 
                   <td>{{ o.direccion if o.direccion else '—' }}</td>
 
@@ -207,11 +298,10 @@
 
           </table>
         </div>
-
       {% endfor %}
 
     {% else %}
-      <div class="alert alert-warning text-center">No hay órdenes finalizadas o canceladas.</div>
+      <div class="alert alert-warning text-center">No hay órdenes entregadas o canceladas.</div>
     {% endif %}
   </div>
 

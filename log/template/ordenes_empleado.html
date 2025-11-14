@@ -231,18 +231,6 @@
     <div class="ordenes-container">
       <h2 class="text-center" style="color:#ffffff; font-weight:bold;">Gestión de Órdenes</h2>
 
-      <!-- 🔎 BÚSQUEDA -->
-      <div class="search-container mb-3">
-        <form action="{{ url_for('empleado.ordenes_empleado') }}" method="GET">
-          <div class="input-group">
-            <input type="text" class="form-control" placeholder="Buscar por cliente, teléfono o estado..."
-                  name="search_query" value="{{ search_query }}" autocomplete="off" />
-            <button class="btn btn-warning" type="submit">Buscar</button>
-          </div>
-        </form>
-      </div>
-
-
       <!-- 📜 BOTONES -->
       <div class="position-relative mb-3">
         <a href="{{ url_for('empleado.historial_ordenes_empleado') }}" class="btn btn-warning position-absolute end-0">

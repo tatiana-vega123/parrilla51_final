@@ -478,7 +478,8 @@ def actualizar_estado(id_pedido):
         'mensaje': f'{estado_emoji} Pedido #{id_pedido} marcado como {nuevo_estado}'
     })
     
-#historial ordenes 
+#historial ordenes
+    
 @empleado_bp.route('/empleado/historial_ordenes')
 def historial_ordenes_empleado():
     es_empleado, mensaje = verificar_empleado()
@@ -487,53 +488,110 @@ def historial_ordenes_empleado():
         return redirect(url_for('auth.login'))
 
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    search_query = request.args.get('query', '').strip()
 
-    # ========================================
-    # CONSULTA BASE CON JOIN A USUARIOS
-    # ========================================
+    # ============================
+    # OBTENER FILTROS
+    # ============================
+    filtros = {
+        "id_orden": request.args.get('id_orden', '').strip(),
+        "id_usuario": request.args.get('id_usuario', '').strip(),
+        "nombre": request.args.get('nombre', '').strip(),
+        "telefono": request.args.get('telefono', '').strip(),
+        "entrega": request.args.get('entrega', '').strip(),
+        "direccion": request.args.get('direccion', '').strip(),
+        "estado": request.args.get('estado', '').strip(),
+        "fecha_ex": request.args.get('fecha_ex', '').strip(),
+        "mes": request.args.get('mes', '').strip(),
+    }
+
+    # ============================
+    # BASE SQL
+    # ============================
     sql = """
         SELECT 
-            p.*, 
+            p.id_pedido,
+            p.cod_usuario,
+            p.fecha,
+            p.hora,
+            p.tipo_entrega,
+            p.direccion,
+            p.total,
+            p.metodo_pago,
+            p.estado,
             u.nombre AS nombre_usuario,
             u.telefono AS telefono_usuario
         FROM pedidos p
         JOIN usuarios u ON p.cod_usuario = u.id_usuario
         WHERE p.estado IN ('entregado', 'cancelado')
     """
-
     params = []
 
-    # =======================================
-    # BÚSQUEDA
-    # =======================================
-    if search_query:
-        sql += """
-            AND (
-                u.nombre LIKE %s OR
-                u.telefono LIKE %s OR
-                p.estado LIKE %s
-            )
-        """
-        params.extend([
-            f"%{search_query}%",
-            f"%{search_query}%",
-            f"%{search_query}%"
-        ])
+    # ============================
+    # FILTROS DINÁMICOS
+    # ============================
+
+    if filtros["id_orden"]:
+        sql += " AND p.id_pedido = %s"
+        params.append(filtros["id_orden"])
+
+    if filtros["id_usuario"]:
+        sql += " AND p.cod_usuario = %s"
+        params.append(filtros["id_usuario"])
+
+    if filtros["nombre"]:
+        sql += " AND u.nombre LIKE %s"
+        params.append(f"%{filtros['nombre']}%")
+
+    if filtros["telefono"]:
+        sql += " AND u.telefono LIKE %s"
+        params.append(f"%{filtros['telefono']}%")
+
+    # entrega (restaurante/domicilio)
+    if filtros["entrega"]:
+        sql += " AND p.tipo_entrega = %s"
+        params.append(filtros["entrega"])
+
+    # dirección
+    if filtros["direccion"]:
+        sql += " AND p.direccion LIKE %s"
+        params.append(f"%{filtros['direccion']}%")
+
+    # estado
+    if filtros["estado"].lower() in ['entregado', 'cancelado']:
+        sql += " AND p.estado = %s"
+        params.append(filtros["estado"])
+
+    # ============================
+    # NUEVO FILTRO: FECHA EXACTA
+    # ============================
+    if filtros["fecha_ex"]:
+        sql += " AND p.fecha = %s"
+        params.append(filtros["fecha_ex"])
+
+    # ============================
+    # NUEVO FILTRO: MES
+    # ============================
+    if filtros["mes"]:
+        sql += " AND MONTH(p.fecha) = %s"
+        params.append(filtros["mes"])
 
     sql += " ORDER BY p.fecha DESC, p.hora DESC"
 
     cur.execute(sql, params)
     pedidos = cur.fetchall()
 
+    # ============================
+    # DETALLES DE CADA ORDEN
+    # ============================
     ordenes = []
 
-    # =======================================
-    # BUSCAR DETALLES DE CADA ORDEN
-    # =======================================
     for pedido in pedidos:
         cur.execute("""
-            SELECT dp.cod_producto, dp.cantidad, dp.precio_unitario, p.nombre
+            SELECT 
+                dp.cod_producto, 
+                dp.cantidad, 
+                dp.precio_unitario, 
+                p.nombre
             FROM detalle_pedido dp
             JOIN productos p ON dp.cod_producto = p.id_producto
             WHERE dp.cod_pedido = %s
@@ -551,16 +609,15 @@ def historial_ordenes_empleado():
                 'subtotal': subtotal
             })
 
-        # Datos corregidos
         pedido['nombre'] = pedido['nombre_usuario']
         pedido['telefono'] = pedido['telefono_usuario']
         pedido['productos'] = productos
 
         ordenes.append(pedido)
 
-    # =======================================
+    # ============================
     # AGRUPAR POR FECHA
-    # =======================================
+    # ============================
     meses = {
         '01': 'Enero', '02': 'Febrero', '03': 'Marzo', '04': 'Abril',
         '05': 'Mayo', '06': 'Junio', '07': 'Julio', '08': 'Agosto',
@@ -570,11 +627,8 @@ def historial_ordenes_empleado():
     ordenes_por_fecha = {}
 
     for o in ordenes:
-        fecha = str(o['fecha'])  # formato YYYY-MM-DD
-        anio = fecha[:4]
-        mes = fecha[5:7]
-        dia = fecha[8:10]
-
+        fecha = str(o['fecha'])
+        anio, mes, dia = fecha.split("-")
         fecha_bonita = f"{dia} {meses[mes]} {anio}"
 
         if fecha_bonita not in ordenes_por_fecha:
@@ -585,7 +639,6 @@ def historial_ordenes_empleado():
 
         ordenes_por_fecha[fecha_bonita]["lista"].append(o)
 
-        # suma dinero (salta cancelados)
         if o['estado'] != 'cancelado':
             ordenes_por_fecha[fecha_bonita]["total_dinero"] += float(o['total'])
 
@@ -594,9 +647,8 @@ def historial_ordenes_empleado():
     return render_template(
         'historial_ordenes_em.html',
         ordenes_por_fecha=ordenes_por_fecha,
-        query=search_query
+        filtros=filtros
     )
-
 
 # ===============================
 # RESERVAS
