@@ -181,7 +181,6 @@ def cambiar_estado_mesa(id_mesa):
     return jsonify({"ok": True, "estado": nuevo_estado})
 
 
-#historial_pagos
 @empleado_bp.route('/empleado/historial_pagos', methods=['GET'])
 def historial_pagos_restaurante():
     es_empleado, mensaje = verificar_empleado()
@@ -190,29 +189,52 @@ def historial_pagos_restaurante():
         return redirect(url_for('auth.login'))
 
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    query = request.args.get("query", "").strip()
 
     # ==========================
-    # CONSULTA CON BÚSQUEDA
+    #  CAPTURA DE FILTROS
     # ==========================
-    if query:
-        sql = """
-            SELECT *
-            FROM pagos_restaurante
-            WHERE CAST(id_pago_restaurante AS CHAR) LIKE %s
-               OR DATE_FORMAT(fecha, '%%Y-%%m-%%d') LIKE %s
-               OR hora LIKE %s
-            ORDER BY fecha DESC, hora DESC
-        """
-        params = (f"%{query}%", f"%{query}%", f"%{query}%")
-        cur.execute(sql, params)
-    else:
-        cur.execute("SELECT * FROM pagos_restaurante ORDER BY fecha DESC, hora DESC")
+    id_pago = request.args.get("id_pago", "").strip()
+    mesa = request.args.get("mesa", "").strip()
+    fecha = request.args.get("fecha", "").strip()  # YYYY-MM-DD
+    mes = request.args.get("mes", "").strip()      # "01", "02", etc.
 
+    # ==========================
+    #  BASE DE CONSULTA
+    # ==========================
+    sql = "SELECT * FROM pagos_restaurante WHERE 1=1"
+    params = []
+
+    # FILTRO POR ID PAGO
+    if id_pago:
+        sql += " AND id_pago_restaurante = %s"
+        params.append(id_pago)
+
+    # FILTRO POR MESA
+    if mesa:
+        sql += " AND id_mesa = %s"
+        params.append(mesa)
+
+    # FILTRO POR FECHA EXACTA
+    if fecha:
+        sql += " AND DATE(fecha) = %s"
+        params.append(fecha)
+
+    # FILTRO POR MES (solo MM)
+    if mes:
+        sql += " AND DATE_FORMAT(fecha, '%%m') = %s"
+        params.append(mes)
+
+    # ORDEN FINAL
+    sql += " ORDER BY fecha DESC, hora DESC"
+
+    # ==========================
+    #  EJECUTAR CONSULTA
+    # ==========================
+    cur.execute(sql, params)
     pagos = cur.fetchall()
 
     # ==========================
-    # FORMATEO DE FECHA BONITA
+    #  FORMATEAR AGRUPACIÓN
     # ==========================
     meses = {
         '01': 'Enero', '02': 'Febrero', '03': 'Marzo', '04': 'Abril',
@@ -224,7 +246,9 @@ def historial_pagos_restaurante():
 
     for pago in pagos:
 
-        # Obtener detalles
+        # ===================================
+        #  DETALLES DEL PAGO (PRODUCTOS)
+        # ===================================
         cur.execute("""
             SELECT d.*, p.nombre
             FROM detalle_pedido_restaurante d
@@ -233,14 +257,12 @@ def historial_pagos_restaurante():
         """, (pago["id_pago_restaurante"],))
         pago["detalles"] = cur.fetchall()
 
-        # Convertir fecha → YYYY-MM-DD
+        # Fecha YYYY-MM-DD normal
         fecha_str = pago["fecha"].strftime("%Y-%m-%d")
-
-        # Formatear "13 Noviembre 2025"
         yyyy, mm, dd = fecha_str.split("-")
+
         fecha_bonita = f"{int(dd)} {meses[mm]} {yyyy}"
 
-        # Agrupar por fecha bonita
         if fecha_bonita not in historial_por_fecha:
             historial_por_fecha[fecha_bonita] = []
 
@@ -253,6 +275,7 @@ def historial_pagos_restaurante():
         historial_por_fecha=historial_por_fecha,
         historial=pagos
     )
+
 # ===============================
 # REGISTRAR PEDIDO
 # ===============================

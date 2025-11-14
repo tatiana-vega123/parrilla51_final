@@ -128,12 +128,66 @@
       <h3>Historial de Pagos del Restaurante</h3>
 
       <!-- 🔍 Búsqueda -->
-      <form method="GET" action="{{ url_for('empleado.historial_pagos_restaurante') }}" class="mb-4">
-        <div class="input-group">
-          <input type="text" name="query" class="form-control"
-            placeholder="Buscar por fecha (YYYY-MM-DD), hora (HH:MM) o ID..."
-            value="{{ request.args.get('query', '') }}" autocomplete="off" />
-          <button class="btn btn-warning" type="submit">Buscar</button>
+
+      <form method="GET" action="{{ url_for('empleado.historial_pagos_restaurante') }}" 
+            class="p-3 mb-4 rounded"
+            style="background:#2f2f2f; border:2px solid #ffd700;">
+
+        <div class="d-flex align-items-end gap-3 flex-wrap">
+
+          <!-- ID Pago -->
+          <div style="min-width:120px;">
+            <label class="form-label" style="color:#ffd700; font-size:14px;">ID Pago</label>
+            <input type="number" name="id_pago" class="form-control form-control-sm"
+                  value="{{ request.args.get('id_pago','') }}"
+                  placeholder="Ej: 1">
+          </div>
+
+          <!-- Mesa -->
+          <div style="min-width:120px;">
+            <label class="form-label" style="color:#ffd700; font-size:14px;">Mesa</label>
+            <input type="number" name="mesa" class="form-control form-control-sm"
+                  value="{{ request.args.get('mesa','') }}"
+                  placeholder="Ej: 12">
+          </div>
+
+          <!-- Fecha exacta -->
+          <div style="min-width:150px;">
+            <label class="form-label" style="color:#ffd700; font-size:14px;">Fecha Exacta</label>
+            <input type="date" name="fecha" class="form-control form-control-sm"
+                  value="{{ request.args.get('fecha','') }}">
+          </div>
+
+          <!-- Mes -->
+          <div style="min-width:150px;">
+            <label class="form-label" style="color:#ffd700; font-size:14px;">Mes</label>
+            <select name="mes" class="form-select form-select-sm">
+              <option value="">-- Mes --</option>
+              {% for num, mes in {
+                '01':'Enero','02':'Febrero','03':'Marzo','04':'Abril',
+                '05':'Mayo','06':'Junio','07':'Julio','08':'Agosto',
+                '09':'Septiembre','10':'Octubre','11':'Noviembre','12':'Diciembre'
+              }.items() %}
+                <option value="{{ num }}" {% if request.args.get('mes') == num %}selected{% endif %}>
+                  {{ mes }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Botones -->
+          <div class="d-flex gap-2" style="min-width:200px;">
+            <button class="btn btn-warning btn-sm w-50" type="submit" style="font-weight:bold;">
+              🔍 Buscar
+            </button>
+
+            <a href="{{ url_for('empleado.historial_pagos_restaurante') }}" 
+              class="btn btn-danger btn-sm w-50"
+              style="background:#ff4444; border:none; font-weight:bold;">
+              ✖ Limpiar
+            </a>
+          </div>
+
         </div>
       </form>
 
