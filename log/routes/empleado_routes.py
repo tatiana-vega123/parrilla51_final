@@ -505,12 +505,13 @@ def historial_ordenes_empleado():
     }
 
     # ============================
-    # BASE SQL
+    # SQL BASE CON JOIN
     # ============================
     sql = """
         SELECT 
             p.id_pedido,
             p.cod_usuario,
+            u.nombre,
             p.fecha,
             p.hora,
             p.tipo_entrega,
@@ -518,8 +519,7 @@ def historial_ordenes_empleado():
             p.total,
             p.metodo_pago,
             p.estado,
-            u.nombre AS nombre_usuario,
-            u.telefono AS telefono_usuario
+            p.telefono
         FROM pedidos p
         JOIN usuarios u ON p.cod_usuario = u.id_usuario
         WHERE p.estado IN ('entregado', 'cancelado')
@@ -529,7 +529,6 @@ def historial_ordenes_empleado():
     # ============================
     # FILTROS DINÁMICOS
     # ============================
-
     if filtros["id_orden"]:
         sql += " AND p.id_pedido = %s"
         params.append(filtros["id_orden"])
@@ -543,34 +542,25 @@ def historial_ordenes_empleado():
         params.append(f"%{filtros['nombre']}%")
 
     if filtros["telefono"]:
-        sql += " AND u.telefono LIKE %s"
+        sql += " AND p.telefono LIKE %s"
         params.append(f"%{filtros['telefono']}%")
 
-    # entrega (restaurante/domicilio)
     if filtros["entrega"]:
         sql += " AND p.tipo_entrega = %s"
         params.append(filtros["entrega"])
 
-    # dirección
     if filtros["direccion"]:
         sql += " AND p.direccion LIKE %s"
         params.append(f"%{filtros['direccion']}%")
 
-    # estado
     if filtros["estado"].lower() in ['entregado', 'cancelado']:
         sql += " AND p.estado = %s"
         params.append(filtros["estado"])
 
-    # ============================
-    # NUEVO FILTRO: FECHA EXACTA
-    # ============================
     if filtros["fecha_ex"]:
         sql += " AND p.fecha = %s"
         params.append(filtros["fecha_ex"])
 
-    # ============================
-    # NUEVO FILTRO: MES
-    # ============================
     if filtros["mes"]:
         sql += " AND MONTH(p.fecha) = %s"
         params.append(filtros["mes"])
@@ -584,22 +574,21 @@ def historial_ordenes_empleado():
     # DETALLES DE CADA ORDEN
     # ============================
     ordenes = []
-
     for pedido in pedidos:
         cur.execute("""
             SELECT 
                 dp.cod_producto, 
                 dp.cantidad, 
                 dp.precio_unitario, 
-                p.nombre
+                pr.nombre
             FROM detalle_pedido dp
-            JOIN productos p ON dp.cod_producto = p.id_producto
+            JOIN productos pr ON dp.cod_producto = pr.id_producto
             WHERE dp.cod_pedido = %s
         """, (pedido['id_pedido'],))
 
         detalles = cur.fetchall()
-
         productos = []
+
         for d in detalles:
             subtotal = float(d['cantidad']) * float(d['precio_unitario'])
             productos.append({
@@ -609,10 +598,7 @@ def historial_ordenes_empleado():
                 'subtotal': subtotal
             })
 
-        pedido['nombre'] = pedido['nombre_usuario']
-        pedido['telefono'] = pedido['telefono_usuario']
         pedido['productos'] = productos
-
         ordenes.append(pedido)
 
     # ============================
@@ -632,13 +618,9 @@ def historial_ordenes_empleado():
         fecha_bonita = f"{dia} {meses[mes]} {anio}"
 
         if fecha_bonita not in ordenes_por_fecha:
-            ordenes_por_fecha[fecha_bonita] = {
-                "lista": [],
-                "total_dinero": 0
-            }
+            ordenes_por_fecha[fecha_bonita] = {"lista": [], "total_dinero": 0}
 
         ordenes_por_fecha[fecha_bonita]["lista"].append(o)
-
         if o['estado'] != 'cancelado':
             ordenes_por_fecha[fecha_bonita]["total_dinero"] += float(o['total'])
 
@@ -650,27 +632,6 @@ def historial_ordenes_empleado():
         filtros=filtros
     )
 
-# ===============================
-# RESERVAS
-# ===============================
-@empleado_bp.route('/empleado/reservas')
-def reservas_empleado():
-    es_empleado, mensaje = verificar_empleado()
-    if not es_empleado:
-        flash(mensaje, 'danger')
-        return redirect(url_for('auth.login'))
-    
-    cur = mysql.connection.cursor()
-    cur.execute("""
-        SELECT * FROM reservas
-        WHERE estado IN ('Pendiente', 'Confirmada')
-        ORDER BY fecha ASC, hora ASC
-    """)
-    reservas = cur.fetchall()
-    cur.close()
-    
-    today = str(date.today())
-    return render_template('reservas_empleado.html', reservas=reservas, today=today)
 
 # ===============================
 # BUSCAR RESERVAS
