@@ -45,12 +45,13 @@ def mesas_empleado():
         flash(mensaje, 'danger')
         return redirect(url_for('auth.login'))
     
-    cur = mysql.connection.cursor()
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     cur.execute("SELECT * FROM mesas ORDER BY numero_mesa ASC")
     mesas = cur.fetchall()
     cur.close()
     
     return render_template('mesas_empleado.html', mesas=mesas)
+
 
 # ==================== ORDEN DE MESA ====================
 @empleado_bp.route('/empleado/orden/<int:mesa_id>', methods=['GET', 'POST'])
@@ -75,19 +76,19 @@ def orden_mesa(mesa_id):
             flash("⚠️ No se seleccionaron productos válidos o el total es 0", "warning")
             return redirect(url_for('empleado.orden_mesa', mesa_id=mesa_id))
 
-        # ✅ VALIDAR STOCK ANTES DE CONFIRMAR
+        # VALIDAR STOCK
         stock_insuficiente = []
         for p in productos:
             cur.execute("SELECT nombre, cantidad, estado FROM productos WHERE id_producto = %s", (p['id_producto'],))
             producto = cur.fetchone()
-            
+
             if not producto:
                 stock_insuficiente.append(f"ID {p['id_producto']} (no encontrado)")
             elif producto['estado'] != 'Disponible':
                 stock_insuficiente.append(f"{producto['nombre']} (no disponible)")
             elif producto['cantidad'] < p['cantidad']:
                 stock_insuficiente.append(f"{producto['nombre']} (solo quedan {producto['cantidad']} unidades)")
-        
+
         if stock_insuficiente:
             flash(f"❌ Stock insuficiente: {', '.join(stock_insuficiente)}", "danger")
             cur.close()
@@ -104,51 +105,82 @@ def orden_mesa(mesa_id):
             """, (mesa_id, fecha, hora, total))
             id_pago_restaurante = cur.lastrowid
 
-            # Insertar productos y reducir stock
+            # Insertar detalle y restar stock
             for p in productos:
                 cur.execute("""
                     INSERT INTO detalle_pedido_restaurante 
-                    (id_pago_restaurante, id_producto_em, cantidad, precio_unitario)
+                    (id_pago_restaurante, id_producto, cantidad, precio_unitario)
                     VALUES (%s, %s, %s, %s)
-                """, (
-                    id_pago_restaurante,
-                    p['id_producto'],
-                    p['cantidad'],
-                    p['precio']
-                ))
-                
-                # ✅ REDUCIR STOCK
+                """, (id_pago_restaurante, p['id_producto'], p['cantidad'], p['precio']))
+
                 cur.execute("""
-                    UPDATE productos 
-                    SET cantidad = cantidad - %s 
+                    UPDATE productos
+                    SET cantidad = cantidad - %s
                     WHERE id_producto = %s
                 """, (p['cantidad'], p['id_producto']))
 
             mysql.connection.commit()
             cur.close()
 
+            # 🔓 LIBERAR MESA DESPUÉS DEL PAGO
+            cur2 = mysql.connection.cursor()
+            cur2.execute("UPDATE mesas SET estado='libre' WHERE id_mesa=%s", (mesa_id,))
+            mysql.connection.commit()
+            cur2.close()
+
             flash(f"✅ Pago registrado correctamente. Mesa {mesa_id} - Total: ${total:,.0f}", "success")
             return redirect(url_for('empleado.mesas_empleado'))
-            
+
         except Exception as e:
             mysql.connection.rollback()
             flash(f"❌ Error al registrar pago: {str(e)}", "danger")
-            print(f"Error: {e}")
             return redirect(url_for('empleado.orden_mesa', mesa_id=mesa_id))
 
-    # ✅ Solo productos disponibles con stock
+    # ===========================
+    # AL ENTRAR A LA MESA → OCUPADA
+    # ===========================
+    cur.execute("UPDATE mesas SET estado='ocupada' WHERE id_mesa=%s", (mesa_id,))
+    mysql.connection.commit()
+
+    # Cargar productos y categorías
     cur.execute("SELECT * FROM categorias WHERE id_categoria != 6")
     categorias = cur.fetchall()
+
     cur.execute("""
-        SELECT * FROM productos 
-        WHERE cod_categoria != 6 
-        AND estado = 'Disponible' 
+        SELECT * FROM productos
+        WHERE cod_categoria != 6
+        AND estado = 'Disponible'
         AND cantidad > 0
     """)
     productos = cur.fetchall()
     cur.close()
+
     return render_template('calculadora.html', mesa=mesa_id, categorias=categorias, productos=productos)
 
+
+# ===============================
+# CAMBIAR ESTADO DE MESA (AJAX)
+# ===============================
+@empleado_bp.route("/empleado/mesa/<int:id_mesa>/estado", methods=["POST"])
+def cambiar_estado_mesa(id_mesa):
+    es_empleado, mensaje = verificar_empleado()
+    if not es_empleado:
+        return jsonify({"ok": False, "error": "No autorizado"}), 403
+
+    data = request.get_json()
+    nuevo_estado = data.get("estado")
+
+    if nuevo_estado not in ["ocupada", "libre"]:
+        return jsonify({"ok": False, "error": "Estado inválido"}), 400
+
+    cur = mysql.connection.cursor()
+    cur.execute("UPDATE mesas SET estado=%s WHERE id_mesa=%s", (nuevo_estado, id_mesa))
+    mysql.connection.commit()
+    cur.close()
+
+    return jsonify({"ok": True, "estado": nuevo_estado})
+
+#historial_pagos
 @empleado_bp.route('/empleado/historial_pagos', methods=['GET'])
 def historial_pagos_restaurante():
     es_empleado, mensaje = verificar_empleado()
@@ -199,6 +231,7 @@ def historial_pagos_restaurante():
 
     cur.close()
     return render_template('historial_pagos_restaurante.html', historial=historial)
+
 
 # ===============================
 # REGISTRAR PEDIDO

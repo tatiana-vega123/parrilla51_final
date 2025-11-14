@@ -305,59 +305,66 @@
     </main>
   </div>
 
-  <script>
+ <script>
     const mesasGrid = document.getElementById('mesasGrid');
-    const mesasDoradas = JSON.parse(localStorage.getItem('mesasDoradas')) || [];
 
-    // Las mesas se generan desde Flask (datos reales)
+    // Mesas traídas desde Flask
     const mesas = {{ mesas | tojson }};
 
     mesas.forEach(m => {
-      const mesa = document.createElement('div');
-      mesa.className = 'mesa';
-      mesa.textContent = m.numero_mesa;
+        const mesa = document.createElement('div');
+        mesa.className = 'mesa';
+        mesa.textContent = m.numero_mesa;
 
-      if (mesasDoradas.includes(m.id_mesa)) {
-        mesa.classList.add('dorada');
-      }
+        // Pintar según estado real
+        if (m.estado === "ocupada") {
+            mesa.classList.add('dorada');
+        }
 
-      let holdTimer;
-      const holdDuration = 700; // Tiempo de clic sostenido
+        let holdTimer;
+        const holdDuration = 700; // Tiempo de clic sostenido
 
-      const startHold = (e) => {
-        e.stopPropagation();
-        holdTimer = setTimeout(() => {
-          mesa.classList.toggle('dorada');
-          if (mesa.classList.contains('dorada')) {
-            mesasDoradas.push(m.id_mesa);
-          } else {
-            const index = mesasDoradas.indexOf(m.id_mesa);
-            if (index > -1) mesasDoradas.splice(index, 1);
-          }
-          localStorage.setItem('mesasDoradas', JSON.stringify(mesasDoradas));
-        }, holdDuration);
-      };
+        const startHold = (e) => {
+            e.stopPropagation();
 
-      const cancelHold = () => clearTimeout(holdTimer);
+            holdTimer = setTimeout(() => {
+                const nuevoEstado = mesa.classList.contains("dorada") ? "libre" : "ocupada";
 
-      mesa.addEventListener('mousedown', startHold);
-      mesa.addEventListener('mouseup', cancelHold);
-      mesa.addEventListener('mouseleave', cancelHold);
-      mesa.addEventListener('touchstart', startHold);
-      mesa.addEventListener('touchend', cancelHold);
-      mesa.addEventListener('touchmove', cancelHold);
+                fetch(`/empleado/mesa/${m.id_mesa}/estado`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ estado: nuevoEstado })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.ok) {
+                        mesa.classList.toggle("dorada");
+                    }
+                });
+            }, holdDuration);
+        };
 
-      mesa.onclick = () => {
-        window.location.href = `/empleado/orden/${m.id_mesa}`;
-      };
+        const cancelHold = () => clearTimeout(holdTimer);
 
-      mesasGrid.appendChild(mesa);
+        mesa.addEventListener('mousedown', startHold);
+        mesa.addEventListener('mouseup', cancelHold);
+        mesa.addEventListener('mouseleave', cancelHold);
+        mesa.addEventListener('touchstart', startHold);
+        mesa.addEventListener('touchend', cancelHold);
+        mesa.addEventListener('touchmove', cancelHold);
+
+        // Click normal → entrar a la orden
+        mesa.onclick = () => {
+            window.location.href = `/empleado/orden/${m.id_mesa}`;
+        };
+
+        mesasGrid.appendChild(mesa);
     });
 
     // Ocultar alertas automáticamente después de 7 segundos
     setTimeout(() => {
-      const alerts = document.querySelectorAll('.alert');
-      alerts.forEach(a => a.remove());
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(a => a.remove());
     }, 7000);
   </script>
 
