@@ -234,6 +234,52 @@
     color: #0c5460;
     border-color: #bee5eb;
   }
+/* === ESTILO EXCLUSIVO PARA LA BARRA DE FILTROS === */
+
+.filtro-bar {
+  background: #2f2f2f;
+  border: 2px solid #ffd700;
+  border-radius: 10px;
+  padding: 15px;
+}
+
+.filtro-bar label {
+  color: #ffd700;
+  font-weight: 600;
+}
+
+.filtro-bar .filtro-input {
+  background: #ffffff !important;
+  color: #333 !important;
+  border: 1px solid #ccc !important;
+  border-radius: 6px !important;
+  padding: 4px 8px;
+}
+
+.filtro-bar select.filtro-input {
+  cursor: pointer;
+}
+
+/* Botón Buscar */
+.filtro-bar .btn-warning {
+  background: #ffd700 !important;
+  color: black !important;
+  font-weight: bold;
+}
+
+/* Botón Limpiar */
+.filtro-bar .btn-danger {
+  font-weight: bold;
+}
+
+/* 🔥 Ajustes de tamaño y separación para ambos botones */
+.filtro-bar .btn-warning,
+.filtro-bar .btn-danger {
+  margin-top: 22px;       /* Bajarlos un poco */
+  padding: 5px 10px;      /* Hacerlos más grandes */
+  font-size: 15px;        /* Texto más claro */
+  border-radius: 6px;     /* Bordes más bonitos */
+}
 
 
 
@@ -279,16 +325,80 @@
     </div>
   {% endif %}
 
-  <!-- 🔎 BÚSQUEDA -->
-  <div class="search-container mb-3">
-    <form action="{{ url_for('empleado.buscar_reservas') }}" method="GET">
-      <div class="input-group">
-        <input type="text" class="form-control" placeholder="Buscar por nombre, documento, teléfono..."
-          name="search_query" value="{{ request.args.get('search_query', '') }}" autocomplete="off" />
-        <button class="btn btn-warning" type="submit">Buscar</button>
-      </div>
-    </form>
-  </div>
+  <!-- BÚSQUEDA -->
+  <!-- 🔍 Filtros de Búsqueda -->
+<div class="filtro-bar mb-4">
+
+  <form class="d-flex align-items-center gap-3 flex-wrap"
+        method="GET"
+        action="{{ url_for('empleado.reservas_empleado_busqueda') }}"
+        style="width:100%">
+
+    <!-- ID -->
+    <div class="d-flex flex-column">
+      <label>ID Reserva</label>
+      <input type="number" name="id_reserva" class="filtro-input"
+            placeholder="Ej: 1" value="{{ request.args.get('id_reserva','') }}">
+    </div>
+
+    <!-- Nombre / Documento / Tel -->
+    <div class="d-flex flex-column">
+      <label>Nombre / Doc / Tel</label>
+      <input type="text" name="query" class="filtro-input"
+            placeholder="Ej: Juan, 123456..."
+            value="{{ request.args.get('query','') }}">
+    </div>
+
+    <!-- Fecha exacta -->
+    <div class="d-flex flex-column">
+      <label>Fecha Exacta</label>
+      <input type="date" name="fecha" class="filtro-input"
+            value="{{ request.args.get('fecha','') }}">
+    </div>
+
+    <!-- Mes -->
+    <div class="d-flex flex-column">
+      <label>Mes</label>
+      <select name="mes" class="filtro-input">
+        <option value="">-- Mes --</option>
+        {% for num, mes in [
+          ('01','Enero'),('02','Febrero'),('03','Marzo'),('04','Abril'),
+          ('05','Mayo'),('06','Junio'),('07','Julio'),('08','Agosto'),
+          ('09','Septiembre'),('10','Octubre'),('11','Noviembre'),('12','Diciembre')
+        ] %}
+          <option value="{{ num }}" {% if request.args.get('mes') == num %}selected{% endif %}>
+            {{ mes }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Estado -->
+    <div class="d-flex flex-column">
+      <label>Estado</label>
+      <select name="estado" class="filtro-input">
+        <option value="">-- Estado --</option>
+        <option value="Pendiente"   {% if request.args.get('estado')=='Pendiente' %}selected{% endif %}>Pendiente</option>
+        <option value="Confirmada"  {% if request.args.get('estado')=='Confirmada' %}selected{% endif %}>Confirmada</option>
+      </select>
+    </div>
+
+    <!-- Botones -->
+    <div class="d-flex align-items-end gap-2">
+
+      <button type="submit" class="btn btn-warning btn-sm">
+        🔍 Buscar
+      </button>
+
+      <a href="{{ url_for('empleado.reservas_empleado') }}"
+        class="btn btn-danger btn-sm">
+        ✖ Limpiar
+      </a>
+
+    </div>
+
+  </form>
+</div>
 
   <!--  BOTONES -->
   <div class="position-relative mb-3">
@@ -356,8 +466,9 @@
                   <label class="form-label">Teléfono</label>
                   <input type="text" class="form-control mb-3" name="telefono" value="{{ res.telefono }}" />
 
-                  <label class="form-label">Fecha</label>
-                  <input type="date" class="form-control mb-3" name="fecha" required min="{{ today }}" max="{{ today[:4] }}-12-31" value="{{ res.fecha }}"  data-original="{{ res.fecha }}" />
+                  <p class="form-label">Fecha:</p>
+                  <p class="text-warning fw-bold">{{ res.fecha }}</p>
+                  <input type="hidden" name="fecha" value="{{ res.fecha }}">
 
                   <label class="form-label">Hora</label>
                   <select class="form-select mb-3" name="hora" required>

@@ -600,27 +600,66 @@ def reservas_empleado():
 # ===============================
 # BUSCAR RESERVAS
 # ===============================
-@empleado_bp.route('/empleado/buscar_reservas')
-def buscar_reservas():
+
+@empleado_bp.route('/empleado/reservas/buscar', methods=['GET'])
+def reservas_empleado_busqueda():
     es_empleado, mensaje = verificar_empleado()
     if not es_empleado:
         flash(mensaje, 'danger')
         return redirect(url_for('auth.login'))
-    
-    search_query = request.args.get('search_query', '')
-    
-    cur = mysql.connection.cursor()
-    cur.execute("""
+
+    # Filtros GET
+    id_reserva = request.args.get("id_reserva", "").strip()
+    query = request.args.get("query", "").strip()
+    fecha = request.args.get("fecha", "").strip()
+    mes = request.args.get("mes", "").strip()
+    estado = request.args.get("estado", "").strip()
+
+    filtros = []
+    valores = []
+
+    if id_reserva:
+        filtros.append("id_reserva = %s")
+        valores.append(id_reserva)
+
+    if query:
+        filtros.append("(nombre LIKE %s OR documento LIKE %s OR telefono LIKE %s)")
+        valores.extend([f"%{query}%", f"%{query}%", f"%{query}%"])
+
+    if fecha:
+        filtros.append("fecha = %s")
+        valores.append(fecha)
+
+    if mes:
+        filtros.append("DATE_FORMAT(fecha, '%%m') = %s")
+        valores.append(mes)
+
+    if estado:
+        filtros.append("estado = %s")
+        valores.append(estado)
+    else:
+        filtros.append("estado IN ('Pendiente', 'Confirmada')")
+
+    where = " AND ".join(filtros) if filtros else "1"
+
+    sql = f"""
         SELECT * FROM reservas
-        WHERE (nombre LIKE %s OR documento LIKE %s OR telefono LIKE %s)
-        AND estado IN ('Pendiente', 'Confirmada')
+        WHERE {where}
         ORDER BY fecha ASC, hora ASC
-    """, (f'%{search_query}%', f'%{search_query}%', f'%{search_query}%'))
+    """
+
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cur.execute(sql, valores)
     reservas = cur.fetchall()
     cur.close()
-    
+
     today = str(date.today())
-    return render_template('reservas_empleado.html', reservas=reservas, today=today)
+
+    return render_template(
+        'reservas_empleado.html',
+        reservas=reservas,
+        today=today
+    )
 
 # ===============================
 # AGREGAR RESERVA
@@ -800,10 +839,7 @@ def cambiar_estado_reserva(id_reserva):
         print(f"Error al actualizar estado: {e}")
         return jsonify({"success": False, "error": "❌ Error interno del servidor"}), 500
 
-
-# ===============================
-# HISTORIAL RESERVAS AGRUPADO POR MES
-# ===============================
+#Historial reservas
 @empleado_bp.route('/empleado/historial_reservas')
 def historial_reservas_em():
     es_empleado, mensaje = verificar_empleado()
@@ -811,12 +847,13 @@ def historial_reservas_em():
         flash(mensaje, 'danger')
         return redirect(url_for('auth.login'))
 
-    # Recibir parámetro de búsqueda
     query = request.args.get('query', '').strip()
+    id_reserva = request.args.get('id_reserva', '').strip()
+    fecha = request.args.get('fecha', '').strip()
+    mes = request.args.get('mes', '').strip()
 
     cur = mysql.connection.cursor()
 
-    # Consulta base
     sql = """
         SELECT id_reserva, nombre, documento, telefono,
                fecha, hora, cant_personas, tipo_evento, id_usuario,
@@ -827,7 +864,12 @@ def historial_reservas_em():
 
     params = []
 
-    # Si hay búsqueda, agregar filtros
+    # Filtro ID
+    if id_reserva:
+        sql += " AND id_reserva = %s"
+        params.append(id_reserva)
+
+    # Filtro Nombre / Doc / Tel
     if query:
         sql += """
             AND (
@@ -838,37 +880,41 @@ def historial_reservas_em():
         """
         params.extend([f"%{query}%", f"%{query}%", f"%{query}%"])
 
+    # Filtro Fecha Exacta
+    if fecha:
+        sql += " AND fecha = %s"
+        params.append(fecha)
+
+    # Filtro Mes (MM)
+    # FILTRO MES (MM)
+    if mes:
+        sql += " AND DATE_FORMAT(fecha, '%%m') = %s"
+        params.append(mes)
+
+
     sql += " ORDER BY fecha DESC LIMIT 200"
 
     cur.execute(sql, params)
     historial = cur.fetchall()
     cur.close()
 
-    # ================================
-    # AGRUPAR POR MES
-    # ================================
+    # Agrupar por mes
     meses_nombres = {
-        '01': 'Enero', '02': 'Febrero', '03': 'Marzo', '04': 'Abril',
-        '05': 'Mayo', '06': 'Junio', '07': 'Julio', '08': 'Agosto',
-        '09': 'Septiembre', '10': 'Octubre', '11': 'Noviembre', '12': 'Diciembre'
+        '01':'Enero','02':'Febrero','03':'Marzo','04':'Abril','05':'Mayo','06':'Junio',
+        '07':'Julio','08':'Agosto','09':'Septiembre','10':'Octubre','11':'Noviembre','12':'Diciembre'
     }
 
     historial_por_mes = {}
 
     for r in historial:
-        fecha = str(r['fecha'])  # YYYY-MM-DD
-        mes_num = fecha[5:7]     # "06"
+        mes_num = str(r['fecha'])[5:7]
         mes_nombre = meses_nombres.get(mes_num, "Desconocido")
 
-        if mes_nombre not in historial_por_mes:
-            historial_por_mes[mes_nombre] = []
-
-        historial_por_mes[mes_nombre].append(r)
+        historial_por_mes.setdefault(mes_nombre, []).append(r)
 
     return render_template(
         'historial_reservas_em.html',
-        historial_por_mes=historial_por_mes,
-        query=query
+        historial_por_mes=historial_por_mes
     )
 
 # ===============================
