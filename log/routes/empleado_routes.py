@@ -729,7 +729,8 @@ def agregar_reserva():
     cur = mysql.connection.cursor()
 
     # Validar reserva duplicada
-    cur.execute("SELECT COUNT(*) as total FROM reservas WHERE fecha = %s", (fecha,))
+    cur.execute(""" SELECT COUNT(*) as total FROM reservas WHERE fecha = %s AND estado !='Cancelada'""", (fecha,))
+
     result = cur.fetchone()
     count = result['total'] if result else 0
 
@@ -792,12 +793,16 @@ def editar_reserva(id_reserva):
 
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     
-    # Validar fecha duplicada
+    # Validar fecha duplicada (EXCLUYENDO las canceladas)
     cur.execute("""
-        SELECT COUNT(*) AS total FROM reservas
-        WHERE fecha = %s AND id_reserva != %s
+        SELECT COUNT(*) AS total  
+        FROM reservas 
+        WHERE fecha = %s 
+          AND id_reserva != %s
+          AND estado != 'Cancelada'
     """, (nueva_fecha, id_reserva))
-    count = cur.fetchone()["total"]
+
+    count = cur.fetchone()["total"]  # ← ESTO FALTABA
 
     if count > 0:
         flash(f"⚠️ Ya existe otra reserva para el {nueva_fecha}", "warning")
@@ -843,26 +848,32 @@ def eliminar_reserva(id_reserva):
     if not es_empleado:
         flash(mensaje, 'danger')
         return redirect(url_for('auth.login'))
-    
+
     try:
         cur = mysql.connection.cursor()
-        
-        # Obtener info antes de eliminar
+
+        # Obtener info
         cur.execute("SELECT nombre, fecha FROM reservas WHERE id_reserva=%s", (id_reserva,))
         reserva = cur.fetchone()
-        
+
         if reserva:
-            cur.execute("DELETE FROM reservas WHERE id_reserva=%s", (id_reserva,))
+            # En lugar de borrar, cambia el estado
+            cur.execute("""
+                UPDATE reservas 
+                SET estado = 'Cancelada'
+                WHERE id_reserva = %s
+            """, (id_reserva,))
             mysql.connection.commit()
-            flash(f"🗑️ Reserva de {reserva['nombre']} ({reserva['fecha']}) eliminada", "info")
+
+            flash(f"❌ La reserva de {reserva['nombre']} ({reserva['fecha']}) se ha cancelado correctamente", "info")
         else:
             flash("⚠️ Reserva no encontrada", "warning")
-        
+
         cur.close()
-        
+
     except Exception as e:
-        flash(f"❌ Error al eliminar reserva: {str(e)}", "danger")
-    
+        flash(f"❌ Error al cancelar la reserva: {str(e)}", "danger")
+
     return redirect(url_for('empleado.reservas_empleado'))
 
 
@@ -895,8 +906,10 @@ def cambiar_estado_reserva(id_reserva):
     except Exception as e:
         print(f"Error al actualizar estado: {e}")
         return jsonify({"success": False, "error": "❌ Error interno del servidor"}), 500
-
-#Historial reservas
+    
+# ===============================
+# Historial reservas
+# ===============================
 @empleado_bp.route('/empleado/historial_reservas')
 def historial_reservas_em():
     es_empleado, mensaje = verificar_empleado()
@@ -904,10 +917,13 @@ def historial_reservas_em():
         flash(mensaje, 'danger')
         return redirect(url_for('auth.login'))
 
+    # Obtener filtros
     query = request.args.get('query', '').strip()
     id_reserva = request.args.get('id_reserva', '').strip()
+    id_usuario = request.args.get('id_usuario', '').strip()   # 🔥 NUEVO
     fecha = request.args.get('fecha', '').strip()
     mes = request.args.get('mes', '').strip()
+    estado = request.args.get('estado', '').strip()
 
     cur = mysql.connection.cursor()
 
@@ -916,17 +932,27 @@ def historial_reservas_em():
                fecha, hora, cant_personas, tipo_evento, id_usuario,
                estado, comentarios
         FROM reservas
-        WHERE estado = 'Completada'
+        WHERE (estado = 'Completada' OR estado = 'Cancelada')
     """
 
     params = []
 
-    # Filtro ID
+    # Filtro por Estado
+    if estado:
+        sql += " AND estado = %s"
+        params.append(estado)
+
+    # Filtro por ID Reserva
     if id_reserva:
         sql += " AND id_reserva = %s"
         params.append(id_reserva)
 
-    # Filtro Nombre / Doc / Tel
+    # 🔥 Filtro por ID Usuario (NUEVO)
+    if id_usuario:
+        sql += " AND id_usuario = %s"
+        params.append(id_usuario)
+
+    # Filtro general
     if query:
         sql += """
             AND (
@@ -937,19 +963,18 @@ def historial_reservas_em():
         """
         params.extend([f"%{query}%", f"%{query}%", f"%{query}%"])
 
-    # Filtro Fecha Exacta
+    # Filtro fecha exacta
     if fecha:
         sql += " AND fecha = %s"
         params.append(fecha)
 
-    # Filtro Mes (MM)
-    # FILTRO MES (MM)
+    # Filtro por Mes
     if mes:
         sql += " AND DATE_FORMAT(fecha, '%%m') = %s"
         params.append(mes)
 
-
-    sql += " ORDER BY fecha DESC LIMIT 200"
+    # Ordenar y limitar
+    sql += " ORDER BY fecha DESC LIMIT 300"
 
     cur.execute(sql, params)
     historial = cur.fetchall()
@@ -966,13 +991,14 @@ def historial_reservas_em():
     for r in historial:
         mes_num = str(r['fecha'])[5:7]
         mes_nombre = meses_nombres.get(mes_num, "Desconocido")
-
         historial_por_mes.setdefault(mes_nombre, []).append(r)
 
     return render_template(
         'historial_reservas_em.html',
         historial_por_mes=historial_por_mes
     )
+
+
 
 # ===============================
 # PERFIL EMPLEADO (HTML)

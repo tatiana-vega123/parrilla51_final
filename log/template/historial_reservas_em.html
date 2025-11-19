@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Historial de Reservas</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
  <style>
-    /* --- Necesario para que el footer quede abajo --- */
     html, body {
       height: 100%;
     }
@@ -15,11 +15,9 @@
       background-color: #3a3a3a;
       color: #f0f0f0;
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-
       display: flex;
       flex-direction: column;
     }
-    /* ----------------------------------------------- */
 
     .navbar-custom {
       background-color: #2f2f2f;
@@ -91,7 +89,13 @@
       background-color: #e6b800;
     }
 
-    /* --- Footer ajustado para que quede al final --- */
+    /* 🔥 FILA ROJA PARA CANCELADAS */
+    .fila-cancelada {
+      background-color: #5a1f1f !important;
+      color: #ffb3b3 !important;
+      font-weight: bold;
+    }
+
     footer {
       background-color: #2f2f2f;
       color: #fff;
@@ -100,7 +104,7 @@
       border-top: 2px solid #ffd700;
       margin-top: auto;
     }
-    /* ----------------------------------------------- */
+
 </style>
 
 </head>
@@ -134,7 +138,15 @@
               placeholder="Ej: 1">
       </div>
 
-      <!-- Query general -->
+      <!-- ID Usuario -->
+      <div style="min-width:120px;">
+        <label class="form-label" style="color:#ffd700; font-size:14px;">ID Usuario</label>
+        <input type="number" name="id_usuario" class="form-control form-control-sm"
+              value="{{ request.args.get('id_usuario','') }}"
+              placeholder="Ej: 15">
+      </div>
+
+      <!-- Query -->
       <div style="min-width:220px;">
         <label class="form-label" style="color:#ffd700; font-size:14px;">Nombre / Doc / Tel</label>
         <input type="text" name="query" class="form-control form-control-sm"
@@ -166,23 +178,25 @@
         </select>
       </div>
 
-      <!-- Botones -->
+      <!-- Estado -->
+      <div style="min-width:150px;">
+        <label class="form-label" style="color:#ffd700; font-size:14px;">Estado</label>
+        <select name="estado" class="form-select form-select-sm">
+            <option value="">-- Estado --</option>
+            <option value="Completada" {% if request.args.get('estado') == "Completada" %}selected{% endif %}>Completadas</option>
+            <option value="Cancelada" {% if request.args.get('estado') == "Cancelada" %}selected{% endif %}>Canceladas</option>
+        </select>
+      </div>
+
       <div class="d-flex gap-2" style="min-width:200px;">
-        <button class="btn btn-warning btn-sm w-50" type="submit" style="font-weight:bold;">
-          🔍 Buscar
-        </button>
+        <button class="btn btn-warning btn-sm w-50" type="submit" style="font-weight:bold;">🔍 Buscar</button>
         <a href="{{ url_for('empleado.historial_reservas_em') }}" 
           class="btn btn-danger btn-sm w-50"
-          style="background:#ff4444; border:none; font-weight:bold;">
-          ✖ Limpiar
-        </a>
+          style="background:#ff4444; border:none; font-weight:bold;">✖ Limpiar</a>
       </div>
 
     </div>
   </form>
-
-
-
 
   {% if historial_por_mes %}
     
@@ -197,28 +211,30 @@
           <thead>
             <tr>
               <th>ID Reserva</th>
+              <th>ID Usuario</th>
               <th>Nombre</th>
               <th>Documento</th>
               <th>Teléfono</th>
               <th>Fecha</th>
+              <th>Estado</th>
               <th>Acción</th>
             </tr>
           </thead>
           <tbody>
             {% for r in reservas %}
-              <tr>
+              <tr class="{% if r.estado == 'Cancelada' %}fila-cancelada{% endif %}">
                 <td>{{ r.id_reserva }}</td>
+                <td>{{ r.id_usuario }}</td>
                 <td>{{ r.nombre }}</td>
                 <td>{{ r.documento }}</td>
                 <td>{{ r.telefono }}</td>
                 <td>{{ r.fecha }}</td>
+                <td>{{ r.estado }}</td>
                 <td>
                   <button class="btn-detalles"
                     data-detalles='{{ {
                       "personas": r.cant_personas,
                       "evento": r.tipo_evento,
-                      "usuario": r.id_usuario,
-                      "estado": r.estado,
                       "comentarios": r.comentarios
                     } | tojson | safe }}'
                     onclick="mostrarDetalles()">
@@ -246,11 +262,11 @@
     <div class="modal-content" style="background:#2f2f2f; color:white; border:2px solid #ffd700;">
       <div class="modal-header">
         <h5 class="modal-title" style="color:#ffd700;">Detalles de la reserva</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body" id="contenidoModal"></div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-warning" data-bs-dismiss="modal">Cerrar</button>
+        <button class="btn btn-warning" data-bs-dismiss="modal">Cerrar</button>
       </div>
     </div>
   </div>
@@ -270,15 +286,12 @@ function mostrarDetalles() {
   const html = `
     <p><b>Personas:</b> ${d.personas}</p>
     <p><b>Tipo de evento:</b> ${d.evento}</p>
-    <p><b>ID Usuario:</b> ${d.usuario}</p>
-    <p><b>Estado:</b> ${d.estado}</p>
     <p><b>Comentarios:</b> ${d.comentarios || "Sin comentarios"}</p>
   `;
 
   document.getElementById("contenidoModal").innerHTML = html;
 
-  const modal = new bootstrap.Modal(document.getElementById("modalDetalles"));
-  modal.show();
+  new bootstrap.Modal(document.getElementById("modalDetalles")).show();
 }
 </script>
 
